@@ -1,12 +1,9 @@
-# Next.js Discord Bot
+# So Bad It's Good (SBIG) Discord Bot
 
-The source code of the Discord bot for the official [Next.js Discord](https://nextjs.org/discord).
+Bad movie night bot
+
+Based on https://github.com/vercel/nextjs-discord-bot/tree/main
 
 ## Features
-
-- Adding users to certain channels based on message reactions
-- Anti-spam protection through a whitelist
-- Monitoring for certain emojis and words
-- Helping log messages that mods flag
-- Keeping rules up to date
-- Alert reactions
+- Keeping rules up to 
+- Voice Channel rename for countdown update

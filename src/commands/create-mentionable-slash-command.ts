@@ -28,7 +28,7 @@ export const createMentionableSlashCommand = ({
     async execute(interaction) {
       const { options } = interaction;
 
-      const target = options.getMember('member');
+      const target = (options as any).getMember('member');
       const targetId = target instanceof GuildMember ? target.id : null;
 
       interaction.reply({

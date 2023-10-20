@@ -8,11 +8,10 @@ import { remainingTime } from '../utils';
  * The bot will keep track of a countdown, updating a voice channel name so all the members can see it
  */
 
-const TITLE_VOICE_CHANNEL_ID = '902455952048029696';
-const COUNTDOWN_VOICE_CHANNEL_ID = '902456113298022420';
-const TARGET_TIME = '26 Oct 2021 09:00:00 GMT-0700';
+const COUNTDOWN_VOICE_CHANNEL_ID = '1110773018403295264';
+const TARGET_TIME = '23 Oct 2023 19:30:00 GMT-0600';
 
-let enabled = false;
+let enabled = true;
 
 export const onStartup: OnStartupHandler = async (client) => {
   if (!enabled) return;
@@ -36,13 +35,8 @@ export const onStartup: OnStartupHandler = async (client) => {
     const timeDiff = targetDate.getTime() - Date.now();
 
     if (timeDiff <= 0) {
-      const channelName = `Next.js Conf started!`;
+      const channelName = `The Theater`;
       voiceChannel.setName(channelName);
-
-      const titleVoiceChannel = client.channels.cache.get(
-        TITLE_VOICE_CHANNEL_ID
-      );
-      titleVoiceChannel?.delete();
 
       enabled = false;
       return;

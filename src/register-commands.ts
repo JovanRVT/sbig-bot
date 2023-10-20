@@ -15,7 +15,7 @@ import { allCommands } from './commands';
 
   const commands = allCommands().map((file) => file.data.toJSON());
 
-  const rest = new REST({ version: '10' }).setToken(
+  const rest = new REST().setToken(
     process.env.DISCORD_BOT_TOKEN
   );
 

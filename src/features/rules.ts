@@ -9,7 +9,7 @@ import { OnStartupHandler } from '../types';
  * the existing messages to avoid creating pings in the channel.
  */
 
-const RULES_CHANNEL_ID = process.env.RULES_CHANNEL_ID ?? '752553802359505020';
+const RULES_CHANNEL_ID = process.env.RULES_CHANNEL_ID ?? '1034257382378848329';
 const INTRO_CHANNEL_ID = '766393115044216854';
 // const HELP_CHANNEL_ID = '752668543891276009';
 // const OFFTOPIC_CHANNEL_ID = '766433464055496744';
@@ -34,26 +34,17 @@ const INTRO_CHANNEL_ID = '766393115044216854';
 // `,
 
 const RULES_MESSAGES = [
-  `**To unlock the rest of the server, make sure to introduce yourself in the <#${INTRO_CHANNEL_ID}> channel!** Use this template:
+  `🎥 These rules will serve as a general guideline for what movies are and are not considered “So bad it’s good” 
 
-🌎 I'm from: Italy
-🏢 I work at: Amazon
-💻 I work with this tech: Next.js, Typescript, Tailwind, and Prisma
-🍎 I snack on: ☕
-
-Also, tell us what tools you use so we can automatically add you to the relevant channels!
-
-<:javascript:770004227366846494> : JavaScript
-
-<:typescript:770004243545325580> : TypeScript
-
-<:tailwind:913088128468787210> : Tailwind
-
-<:rust:913088096692748349> : Rust
-
-<:swr:770004547422650388> : SWR
-
-<:mdx:935667057121439805> : MDX
+  🍿 Enjoyment of the movie must be derived from its badness. Its badness needs to be the thing that creates a sense of bewildered enjoyment. 
+  
+  🏆 There must be a pervading sense that those who made the film thought what they were doing was great, or at least good. Good Bad Movies have minimal self-awareness. Here are two examples that may help explain this sentiment: (1) MacGruber is not a Good Bad Movie, it’s a tribute to Good Bad Movies, and (2) Fast Five is not a Good Bad Movie, it is a movie that intentionally wades into ridiculousness (and then manufactures a reaction similar to the one a Good Bad Movie elicits naturally). 
+  
+  🍅 The movie must have been something of a critical failure when it was released. Critics, god bless them, hold movies to a high standard as an art form and generally don’t reward a movie for being of low quality. In that way, they’re a helpful, as-objective-as-possible resource in determining which films are bad, and therefore eligible to be Good Bad. We will institute a critic score maximum of 60% on Rotten Tomatoes or IMDb, and/or a Golden Raspberry Award. 
+  
+  🗳️ For exceptions to these rules to be made, A) a borderline bad movie must have a majority share of the week’s viewers to be part of the weekly vote or B) a likely good movie must have unanimous support from the week’s viewers
+  
+  🤖 If any questions/suggestions on the SBIGBot (https://github.com/JovanRVT/sbig-bot), reach out to a Rune Priest of the Machine God. Below is a current list of features:\n- Update voice channel with a count down. When time expired - return name to "The Theater"\n- Post or edit the rules
   `,
 ];
 
