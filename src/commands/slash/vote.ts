@@ -1,5 +1,6 @@
-import { MessageReaction, SlashCommandBuilder, User } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder, MessageReaction, SlashCommandBuilder, User } from 'discord.js';
 import { SlashCommand } from '../../types';
+import { calculateResults, createEmbedNameString, createEmbedValueString } from '../../utils';
 
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -7,36 +8,91 @@ export const command: SlashCommand = {
 		.setDescription('Triggers a ranking vote for the movie.'),
 	async execute(interaction) {
 
-    // Send a message useres can react to
-    const message = await interaction.reply({content: 'React to this message to vote!', fetchReply: true });
+    const sButton = new ButtonBuilder()
+      .setCustomId('👑')
+      .setStyle(ButtonStyle.Primary)
+      .setEmoji('👑');
 
-    // Then, you need to create reaction collectors to collect the reactions. 
-    // You can use the createReactionCollector method of the Message class. 
-    // This method takes a filter function and an options object. 
-    // The filter function is used to determine which reactions should be collected.
-    const filter = (reaction: MessageReaction, user: User) => {
-      // Add your conditions here. For example, you can check if the reaction is a certain emoji.
-      return !!reaction.emoji.name && ['👑', '👎'].includes(reaction.emoji.name);
-    };
-    
-    // Collect reactions for 120 seconds
-    const collector = message.createReactionCollector({ filter, time: 120000 });
+    const aButton = new ButtonBuilder()
+      .setCustomId('A')
+      .setStyle(ButtonStyle.Primary)
+      .setLabel('A');
 
-    // You can listen to the collect event of the collector to handle collected reactions:
-    collector.on('collect', (reaction, user) => {
-      console.log(`Collected ${reaction.emoji.name} from ${user.tag}`);
+    const bButton = new ButtonBuilder()
+      .setCustomId('B')
+      .setStyle(ButtonStyle.Primary)
+      .setLabel('B');
+
+    const cButton = new ButtonBuilder()
+      .setCustomId('C')
+      .setStyle(ButtonStyle.Primary)
+      .setLabel('C');
+
+    const dButton = new ButtonBuilder()
+      .setCustomId('D')
+      .setStyle(ButtonStyle.Primary)
+      .setLabel('D');
+
+    const fButton = new ButtonBuilder()
+      .setCustomId('\uD83D\uDC80')
+      .setStyle(ButtonStyle.Danger)
+      .setEmoji('\uD83D\uDC80');
+
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(sButton);
+    const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(aButton, bButton);
+    const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(cButton, dButton);
+    const row3 =  new ActionRowBuilder<ButtonBuilder>().addComponents(fButton);
+    const response = await interaction.reply({ content:'What is the ranking for this movie? ',components: [row, row1, row2, row3] });
+
+    const collector = response.createMessageComponentCollector({ componentType: ComponentType.Button, time: 30000 });
+
+    let userSelections = new Map();
+
+    collector.on('collect', async i => {
+      const selection = i.customId;
+      const user = i.user;
+
+      userSelections.set(user, selection);
+
+      await i.reply(`${i.user} has selected ${selection}!`);
     });
 
     collector.on('end', collected => {
-      console.log(`Collected ${collected.size} items`);
-    });
+      let resultsMessage = '';
 
-    // Add the reactions that users can react with.
-    await message.react('👑');
-    await message.react('🇦');
-    await message.react('🇧');
-    await message.react('🇨');
-    await message.react('🇩');
-    await message.react('\uD83D\uDC80'); // Skull Emoji
+      let voteResults = new Map<String,Array<String>>();
+
+      userSelections.forEach((vote, user) => {
+        let usersForVote = voteResults.get(vote);
+        if (usersForVote) {
+          usersForVote.push(user);
+        } else {
+          voteResults.set(vote, [user]);
+        }
+      });
+
+      // inside a command, event listener, etc.
+      const exampleEmbed = new EmbedBuilder()
+        .setColor(0x0099FF)
+        .setTitle('What is the ranking for this movie?')
+        // .setAuthor({ name: 'Some name', iconUR   L: 'https://i.imgur.com/AfFp7pu.png', url: 'https://discord.js.org' })
+        .setDescription(`Voting has ended! Here are the results:`)
+        // .setThumbnail('https://i.imgur.com/AfFp7pu.png')
+        .addFields(
+          { name: `${createEmbedNameString(voteResults,'👑')}`, value: `${createEmbedValueString(voteResults,'👑')}`, inline: true },
+          { name: `${createEmbedNameString(voteResults,'A')}`, value: `${createEmbedValueString(voteResults,'A')}`, inline: true },
+          { name: `${createEmbedNameString(voteResults,'B')}`, value: `${createEmbedValueString(voteResults,'B')}`, inline: true },
+          { name: `${createEmbedNameString(voteResults,'C')}`, value: `${createEmbedValueString(voteResults,'C')}`, inline: true },
+          { name: `${createEmbedNameString(voteResults,'D')}`, value: `${createEmbedValueString(voteResults,'D')}`, inline: true },
+          { name: `${createEmbedNameString(voteResults,'\uD83D\uDC80')}`, value: `${createEmbedValueString(voteResults,'\uD83D\uDC80')}`, inline: true },
+          { name: 'Total Votes', value: `${userSelections.size}`},
+          { name: 'Result', value: `${calculateResults(voteResults)}`},
+        )
+        // .setImage('https://i.imgur.com/AfFp7pu.png')
+        .setTimestamp()
+        .setFooter({ text: 'So Bad It\'s Good'});
+
+      interaction.followUp({ embeds: [exampleEmbed] });
+    });
   },
 };
