@@ -47,9 +47,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
       ?.execute(interaction);
   }
 
-  if(interaction.isButton()){
-    
-  }
 
   if (interaction.isMessageContextMenuCommand()) {
     contextMenuCommands
