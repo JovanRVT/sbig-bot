@@ -35,7 +35,7 @@ export const onStartup: OnStartupHandler = async (client) => {
     const timeDiff = targetDate.getTime() - Date.now();
 
     if (timeDiff <= 0) {
-      const channelName = `The Theater`;
+      const channelName = 'The Theater';
       voiceChannel.setName(channelName);
 
       enabled = false;
