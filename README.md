@@ -8,8 +8,9 @@ Based on https://github.com/vercel/nextjs-discord-bot/tree/main
 - Keeping rules up to 
 - Voice Channel rename for countdown update
 - Vote Command
+- Turnorder Command
 
-## Helpful LInks
+## Helpful Links
 - Phind VSCode Plugin: https://marketplace.visualstudio.com/items?itemName=phind.phind
 - Discord JS Guide: https://discordjs.guide/#before-you-begin
     - Embeds: https://discordjs.guide/popular-topics/embeds.html#using-the-embedbuilder

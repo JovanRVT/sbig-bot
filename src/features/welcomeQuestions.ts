@@ -34,7 +34,8 @@ export const onReactionAdd: OnReactionHandler = async (
   if (message.id !== LANGUAGES_MESSAGE_ID) {
     console.log('msg is NOT in the welcome channel');
     return;
-  } else {
+  }
+  else {
     console.log('msg is in the welcome channel');
   }
 
@@ -42,7 +43,8 @@ export const onReactionAdd: OnReactionHandler = async (
   if (!Object.keys(LANGUAGES).includes(reaction.emoji.name!)) {
     console.log('emoji is NOT in there');
     return;
-  } else {
+  }
+  else {
     console.log('emoji is in there');
   }
 
@@ -66,7 +68,8 @@ export const onReactionRemove: OnReactionHandler = async (
   if (message.id !== LANGUAGES_MESSAGE_ID) {
     console.log('msg is NOT in the welcome channel');
     return;
-  } else {
+  }
+  else {
     console.log('msg is in the welcome channel');
   }
 
@@ -74,7 +77,8 @@ export const onReactionRemove: OnReactionHandler = async (
   if (!Object.keys(LANGUAGES).includes(reaction.emoji.name!)) {
     console.log('emoji is NOT in there');
     return;
-  } else {
+  }
+  else {
     console.log('emoji is in there');
   }
 

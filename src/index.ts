@@ -47,7 +47,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
       ?.execute(interaction);
   }
 
-
   if (interaction.isMessageContextMenuCommand()) {
     contextMenuCommands
       .find((c) => c.data.name === interaction.commandName)
