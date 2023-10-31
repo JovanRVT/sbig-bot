@@ -5,8 +5,28 @@ import { convertUserSelectionsToVotingResults, createVotingResultsEmbed } from '
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
 		.setName('vote')
-		.setDescription('Triggers a ranking vote.'),
+		.setDescription('Triggers a ranking vote.')
+    .addNumberOption(option =>
+      option.setName('duration')
+        .setDescription('Amount of time in minutes before vote closes (Default is 2 min).')
+        .setRequired(false)
+    )
+    .addStringOption(option =>
+      option.setName('prompt')
+        .setDescription('Text to display above the vote. (Default is \'What is the ranking for this movie?\')')
+        .setRequired(false)
+    ),
 	async execute(interaction) {
+
+     // Pull input duration
+     const defaultMinutes = 2;
+     const durationOption = interaction.options.get('duration');
+     const minutes = (durationOption && typeof durationOption.value === 'number') ? durationOption.value : defaultMinutes;
+     const milliseconds = minutes * 60 * 1000;
+
+     const defaultPrompt = 'What is the ranking for this movie?';
+     const promptOption = interaction.options.get('prompt');
+     const prompt = (promptOption && typeof promptOption.value === 'string') ? promptOption.value : defaultPrompt;
 
     const sButton = new ButtonBuilder()
       .setCustomId('👑')
@@ -47,9 +67,9 @@ export const command: SlashCommand = {
     const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(aButton, bButton);
     const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(cButton, dButton, fButton);
     const row3 = new ActionRowBuilder<ButtonBuilder>().addComponents(skullButton);
-    const response = await interaction.reply({ content:'What is the ranking for this movie? ', components: [row, row1, row2, row3] });
+    const response = await interaction.reply({ content:`${prompt} \nTime to Vote: ${minutes} minutes from start time`, components: [row, row1, row2, row3] });
 
-    const collector = response.createMessageComponentCollector({ componentType: ComponentType.Button, time: 30000 });
+    const collector = response.createMessageComponentCollector({ componentType: ComponentType.Button, time: milliseconds });
 
     // Map to enforce a single selection per user
     const userSelections = new Map<string, string>();
@@ -66,7 +86,7 @@ export const command: SlashCommand = {
 
     collector.on('end', () => {
       const resultsEmbed = createVotingResultsEmbed(userSelections, convertUserSelectionsToVotingResults(userSelections), 'Voting has Ended!');
-      interaction.editReply({ embeds: [resultsEmbed], components: [] });
+      interaction.editReply({ content: `${prompt}`, embeds: [resultsEmbed], components: [] });
     });
   },
 };
