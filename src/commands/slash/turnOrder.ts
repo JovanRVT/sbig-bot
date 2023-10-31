@@ -51,11 +51,11 @@ export const command: SlashCommand = {
       currentPos = 0;
 
       // Clear the previous isTurn and set the next before saving back to file
-      let interactionReplyContent = 'The current turn order is: ';
+      replyContent = 'The current turn order is: ';
       turnOrder.forEach((turnOrderItem) => {
-        interactionReplyContent += `\n <@${turnOrderItem.id}>`;
+        replyContent += `\n <@${turnOrderItem.id}>`;
         if (currentPos == activePos) {
-          interactionReplyContent += ' - ✅';
+          replyContent += ' - ✅';
           turnOrderItem.isTurn = true;
         }
         else {
@@ -66,8 +66,12 @@ export const command: SlashCommand = {
 
       // Write the new turn order back to the file
       fs.writeFileSync('turnOrder.json', JSON.stringify(turnOrder));
+      await i.reply({ content:'Turn order updated', ephemeral: true });
+      await interaction.editReply({ content:`${replyContent}` });
+    });
 
-      await i.reply({ content:`${interactionReplyContent}` });
+    collector.on('end', () => {
+      interaction.editReply({ content:`${replyContent}`, components: [] });
     });
   },
 };

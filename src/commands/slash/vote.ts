@@ -1,6 +1,6 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder, SlashCommandBuilder } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '../../types';
-import { calculateResults, createEmbedNameString, createEmbedValueString } from '../../utils';
+import { convertUserSelectionsToVotingResults, createVotingResultsEmbed } from '../../utils';
 
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -34,62 +34,39 @@ export const command: SlashCommand = {
       .setLabel('D');
 
     const fButton = new ButtonBuilder()
+    .setCustomId('F')
+    .setStyle(ButtonStyle.Primary)
+    .setLabel('F');
+
+    const skullButton = new ButtonBuilder()
       .setCustomId('\uD83D\uDC80')
       .setStyle(ButtonStyle.Danger)
       .setEmoji('\uD83D\uDC80');
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(sButton);
     const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(aButton, bButton);
-    const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(cButton, dButton);
-    const row3 = new ActionRowBuilder<ButtonBuilder>().addComponents(fButton);
+    const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(cButton, dButton, fButton);
+    const row3 = new ActionRowBuilder<ButtonBuilder>().addComponents(skullButton);
     const response = await interaction.reply({ content:'What is the ranking for this movie? ', components: [row, row1, row2, row3] });
 
     const collector = response.createMessageComponentCollector({ componentType: ComponentType.Button, time: 30000 });
 
-    const userSelections = new Map();
+    // Map to enforce a single selection per user
+    const userSelections = new Map<string, string>();
 
     collector.on('collect', async i => {
       const selection = i.customId;
-      const user = i.user;
+      userSelections.set(i.user.id, selection);
 
-      userSelections.set(user, selection);
+      const currentResultsEmbed = createVotingResultsEmbed(userSelections, convertUserSelectionsToVotingResults(userSelections), 'Voting is Live!');
 
-      await i.reply(`${i.user} has selected ${selection}!`);
+      interaction.editReply({ embeds:[currentResultsEmbed] });
+      await i.reply({ content:`You selected ${selection}!`, ephemeral: true });
     });
 
     collector.on('end', () => {
-      const voteResults = new Map<string, Array<string>>();
-
-      userSelections.forEach((vote, user) => {
-        const usersForVote = voteResults.get(vote);
-        if (usersForVote) {
-          usersForVote.push(user);
-        } else {
-          voteResults.set(vote, [user]);
-        }
-      });
-
-      // inside a command, event listener, etc.
-      const exampleEmbed = new EmbedBuilder()
-        .setColor(0x0099FF)
-        .setTitle(`Result: ${calculateResults(voteResults)}`)
-        // .setAuthor({ name: 'Some name', iconUR   L: 'https://i.imgur.com/AfFp7pu.png', url: 'https://discord.js.org' })
-        // .setDescription('Voting has ended!')
-        // .setThumbnail('https://i.imgur.com/AfFp7pu.png')
-        .addFields(
-          { name: `${createEmbedNameString(voteResults, '👑')}`, value: `${createEmbedValueString(voteResults, '👑')}`, inline: true },
-          { name: `${createEmbedNameString(voteResults, 'A')}`, value: `${createEmbedValueString(voteResults, 'A')}`, inline: true },
-          { name: `${createEmbedNameString(voteResults, 'B')}`, value: `${createEmbedValueString(voteResults, 'B')}`, inline: true },
-          { name: `${createEmbedNameString(voteResults, 'C')}`, value: `${createEmbedValueString(voteResults, 'C')}`, inline: true },
-          { name: `${createEmbedNameString(voteResults, 'D')}`, value: `${createEmbedValueString(voteResults, 'D')}`, inline: true },
-          { name: `${createEmbedNameString(voteResults, '\uD83D\uDC80')}`, value: `${createEmbedValueString(voteResults, '\uD83D\uDC80')}`, inline: true },
-          { name: 'Total Votes', value: `${userSelections.size}` },
-        )
-        // .setImage('https://i.imgur.com/AfFp7pu.png')
-        .setTimestamp()
-        .setFooter({ text: 'So Bad It\'s Good' });
-
-      interaction.followUp({ embeds: [exampleEmbed] });
+      const resultsEmbed = createVotingResultsEmbed(userSelections, convertUserSelectionsToVotingResults(userSelections), 'Voting has Ended!');
+      interaction.editReply({ embeds: [resultsEmbed], components: [] });
     });
   },
 };
