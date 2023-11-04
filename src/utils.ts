@@ -1,4 +1,5 @@
-import { Client, EmbedBuilder, GuildMember, Message, TextChannel } from 'discord.js';
+import { Client, EmbedBuilder, GuildMember, Message, TextChannel, User } from 'discord.js';
+import { MovieData } from './types';
 
 const MOD_LOG_CHANNEL_ID =
   process.env.MOD_LOG_CHANNEL_ID ?? '763149438951882792';
@@ -108,7 +109,6 @@ export function createVotingResultsEmbed(userSelections: Map<string, string>, vo
 	const currentResultsEmbed = new EmbedBuilder()
         .setColor(0x0099FF)
         .setTitle(`Result: ${calculateResults(voteResults)}`)
-        // .setAuthor({ name: 'Some name', iconUR   L: 'https://i.imgur.com/AfFp7pu.png', url: 'https://discord.js.org' })
         .setDescription(description)
         // .setThumbnail('https://i.imgur.com/AfFp7pu.png')
         .addFields(
@@ -121,11 +121,46 @@ export function createVotingResultsEmbed(userSelections: Map<string, string>, vo
           { name: `${createEmbedNameString(voteResults, '\uD83D\uDC80')}`, value: `${createEmbedValueString(voteResults, '\uD83D\uDC80')}`, inline: true },
           { name: 'Total Votes', value: `${userSelections.size}` },
         )
-        // .setImage('https://i.imgur.com/AfFp7pu.png')
         .setTimestamp()
         .setFooter({ text: 'So Bad It\'s Good' });
 
 	return currentResultsEmbed;
+}
+
+export function createMovieDetailsEmbed(movieData: MovieData, submitter:User) : EmbedBuilder {
+	const movieDetailsEmbed = new EmbedBuilder()
+        .setColor(0x9370db)
+		.setAuthor({ name: submitter.displayName, iconURL: submitter.avatarURL() || undefined })
+        .setTitle(movieData.title)
+        .setDescription(movieData.plot)
+        .addFields(
+          { name: `IMDB Rating: ${movieData.imdbRating}`, value: `${printOtherRatings(movieData.otherRatings)}`, inline: true },
+          { name: 'Year', value:  `${movieData.year}`, inline: true },
+          { name: 'Runtime', value: `${movieData.runtime}`, inline: true },
+          { name: 'Genre', value: `${movieData.genre}`, inline: true },
+          { name: 'Rating', value: `${movieData.rating}`, inline: true },
+          { name: 'Box Office', value: `${movieData.boxOffice}`, inline: true },
+          { name: 'Actors', value: `${movieData.actors}`, inline: true },
+          { name: 'Director', value: `${movieData.director}`, inline: true },
+          { name: 'Writers', value: `${movieData.writers}`, inline: true },
+        );
+
+	if (movieData.image != 'N/A') {
+		movieDetailsEmbed.setImage(movieData.image);
+	}
+	return movieDetailsEmbed;
+}
+
+function printOtherRatings(otherRatings: {Source: string, Value: string}[]) : string {
+	let formattedString = '';
+	if (otherRatings.length == 0) {
+		return ' ';
+	}
+
+    for (const rating of otherRatings) {
+        formattedString += `${rating.Source}: ${rating.Value}\n`;
+    }
+    return formattedString;
 }
 
 function createEmbedValueString(voteResults: Map<string, Array<string>>, vote: string): string {
@@ -183,4 +218,3 @@ function getKeyByWeight(key: number): string {
 	default: return 'Does Not Compute';
 	}
 }
-

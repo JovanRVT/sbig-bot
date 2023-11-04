@@ -16,3 +16,4 @@ required('DISCORD_BOT_TOKEN', process.env.DISCORD_BOT_TOKEN);
 required('DISCORD_CLIENT_ID', process.env.DISCORD_CLIENT_ID);
 required('MOD_LOG_CHANNEL_ID', process.env.MOD_LOG_CHANNEL_ID);
 optional('MODERATOR_ROLE_ID', process.env.MODERATOR_ROLE_ID);
+optional('OMDB_ACCESS_TOKEN', process.env.OMDB_ACCESS_TOKEN);
