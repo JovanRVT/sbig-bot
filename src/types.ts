@@ -54,3 +54,21 @@ export type ContextMenuCommand = {
 export type ContextMenuCommandFile = {
   command: ContextMenuCommand;
 };
+
+export type MovieData = {
+  title: string;
+  plot: string;
+  image: string;
+  imdbRating: number;
+  genre: string;
+  release: string;
+  runtime: string;
+  rating: string;
+  year: number;
+  otherRatings: {Source: string, Value: string}[];
+  director: string;
+  actors: string;
+  writers: string;
+  boxOffice: string;
+  imdbId: string;
+}
