@@ -32,6 +32,11 @@ async function convertApiResponseToMovieDataObject(response: Response) : Promise
         throw new Error(`OMDB Service error! message: ${data.Error}`);
     }
     const movieDataToReturn : MovieData = {
+        sbigRank: '',
+        sbigWatchedDate: '',
+        sbigNotes: '',
+        sbigSubmitter: '',
+        sbigVoteResults: '',
         title: data.Title,
         plot: data.Plot,
         image: data.Poster,
