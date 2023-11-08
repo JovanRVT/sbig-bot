@@ -4,7 +4,7 @@ import discord, { Events, GatewayIntentBits, Partials, User } from 'discord.js';
 import './assert-env-vars';
 
 import { FeatureFile } from './types';
-import { isJsOrTsFile } from './utils';
+import { isJsOrTsFile } from './utils/utils';
 import { slashCommands, contextMenuCommands } from './commands';
 
 const INTRO_CHANNEL_ID = '766393115044216854';

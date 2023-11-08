@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import { SlashCommandFile, ContextMenuCommandFile } from './types';
-import { isJsOrTsFile } from './utils';
+import { isJsOrTsFile } from './utils/utils';
 
 export const slashCommands = fs
   .readdirSync(path.resolve(__dirname, './commands/slash'))

@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '../../types';
 import { omdbHandler } from '../../api/omdb';
-import { createMovieDetailsEmbed } from '../../services/movie-service';
+import { createMovieDetailsEmbed } from '../../utils/discord-utils';
 
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()

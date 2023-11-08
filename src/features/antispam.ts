@@ -1,5 +1,5 @@
 import { OnMessageHandler } from '../types';
-import { isStaff, logAndDelete } from '../utils';
+import { isStaff, logAndDelete } from '../utils/utils';
 
 /**
  * Anti spam
