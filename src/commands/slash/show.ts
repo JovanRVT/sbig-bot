@@ -25,6 +25,7 @@ export const command: SlashCommand = {
       } catch (error) {
         movie = '';
         console.error(error);
+        await interaction.reply({ content: 'Error finding the movie. Please double check the title, link, or ID (e.g. tt0130236)', ephemeral:true });
       }
     }
   },

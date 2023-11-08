@@ -20,7 +20,7 @@ export function createMovieDetailsEmbed(movieData: MovieData, submitter:User) : 
         );
 
 	if (movieData.image != 'N/A') {
-		movieDetailsEmbed.setThumbnail(movieData.image);
+		movieDetailsEmbed.setImage(movieData.image);
 	}
 	return movieDetailsEmbed;
 }

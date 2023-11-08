@@ -2,18 +2,16 @@ import { ButtonInteraction, ModalBuilder, TextInputBuilder, TextInputStyle, Acti
 import fs from 'fs';
 import { MovieData } from '../types';
 
-// File path
-const filePath = 'sbigMovies.json';
-
-// Create
-export function createMovie(movie: MovieData) {
+export function upsertMovie(movie: MovieData, filePath:string) {
     const data = fs.readFileSync(filePath, 'utf-8');
     const movies: MovieData[] = JSON.parse(data);
 
 	// Check if movie with the same imdbId already exists
-	const duplicate = movies.find(m => m.imdbId === movie.imdbId);
+	const duplicate = findDuplicateMovie(filePath, movie.imdbId);
 	if (duplicate) {
-		throw new Error('Movie with the same imdbId already exists');
+		console.log('Movie with the same imdbId already exists, calling update');
+		updateMovie(movie.imdbId, movie, filePath);
+		return;
 	}
 
     movies.push(movie);
@@ -21,14 +19,21 @@ export function createMovie(movie: MovieData) {
 }
 
 // Read
-export function readMovies(): MovieData[] {
+export function readMovies(filePath: string): MovieData[] {
     const data = fs.readFileSync(filePath, 'utf-8');
     return JSON.parse(data);
 }
 
+export function findDuplicateMovie(filePath: string, search:string) : MovieData | undefined {
+	const data = fs.readFileSync(filePath, 'utf-8');
+    const movies: MovieData[] = JSON.parse(data);
+
+	return (movies.find(m => m.imdbId === search || m.title === search));
+}
+
 // Update
-export function updateMovie(id: string, updatedMovie: MovieData) {
-    const movies: MovieData[] = readMovies();
+export function updateMovie(id: string, updatedMovie: MovieData, filePath:string) {
+    const movies: MovieData[] = readMovies(filePath);
     const index = movies.findIndex(movie => movie.imdbId === id);
     if (index !== -1) {
         movies[index] = updatedMovie;
@@ -37,8 +42,8 @@ export function updateMovie(id: string, updatedMovie: MovieData) {
 }
 
 // Delete
-export function deleteMovie(id: string) {
-    let movies: MovieData[] = readMovies();
+export function deleteMovie(id: string, filePath:string) {
+    let movies: MovieData[] = readMovies(filePath);
     movies = movies.filter(movie => movie.imdbId !== id);
     fs.writeFileSync(filePath, JSON.stringify(movies, null, 2));
 }

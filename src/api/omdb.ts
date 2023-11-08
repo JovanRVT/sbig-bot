@@ -1,3 +1,4 @@
+import { upsertMovie, findDuplicateMovie } from '../services/crud-service';
 import { MovieData } from '../types';
 
 if (!process.env.OMDB_ACCESS_TOKEN) {
@@ -12,9 +13,16 @@ export async function omdbHandler(query: string) : Promise<MovieData> {
     else if (query.startsWith('http') && query.includes('title/tt')) {
         const imdbId = query.split('/').filter(part => part.startsWith('tt'))[0];
         searchParam = `i=${imdbId}`;
+        query = imdbId;
     }
     else {
+        query = query.charAt(0).toUpperCase() + query.slice(1);
         searchParam = `t=${query}`;
+    }
+
+    const cachedValue = checkCachedValues(query);
+    if (cachedValue) {;
+        return cachedValue;
     }
 
     const response = await fetch(`https://www.omdbapi.com/?${searchParam}&type=movie&apikey=${process.env.OMDB_ACCESS_TOKEN}`);
@@ -22,7 +30,23 @@ export async function omdbHandler(query: string) : Promise<MovieData> {
     if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
     } else {
-        return convertApiResponseToMovieDataObject(response);
+        const movieResponse = await convertApiResponseToMovieDataObject(response);
+        upsertMovie(movieResponse, 'cache.json');
+        return movieResponse;
+    }
+}
+
+function checkCachedValues(searchString: string) {
+    let cachedValue = findDuplicateMovie('sbigMovies.json', searchString);
+    if (cachedValue) {
+        console.log('Pulled from sbigMovies.json!');
+        return cachedValue;
+    }
+
+    cachedValue = findDuplicateMovie('cache.json', searchString);
+    if (cachedValue) {
+        console.log('Pulled from cache.json!');
+        return cachedValue;
     }
 }
 

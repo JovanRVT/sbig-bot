@@ -1,7 +1,7 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { MovieData, SlashCommand } from '../../types';
 import { omdbHandler } from '../../api/omdb';
-import { createMovie, createSaveModal } from '../../services/crud-service';
+import { upsertMovie, createSaveModal } from '../../services/crud-service';
 import { createMovieDetailsEmbed } from '../../services/movie-service';
 import { createVotingResultsEmbed, createVoteButtonActionRows, calculateResults, convertUserSelectionsToVotingResults } from '../../services/vote-service';
 
@@ -142,8 +142,8 @@ async function saveFollowUpActions(interaction: ChatInputCommandInteraction, mov
       if (i.customId === 'Save') {
         const savedJsonString = await createSaveModal(i, JSON.stringify(movieData, null, '\n').replace(/\n\n/g, '\n'));
         const savedJson:MovieData = JSON.parse(savedJsonString);
-        createMovie(savedJson);
-        i.editReply({content: `Result saved: \n${savedJson}`, components: [] });
+        upsertMovie(savedJson, 'sbigMovies.json');
+        i.editReply({ content: `Result saved: \n${savedJson}`, components: [] });
         collector.stop();
       }
       else {
