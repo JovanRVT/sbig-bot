@@ -1,9 +1,12 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { MovieData, SlashCommand } from '../../types';
 import { omdbHandler } from '../../api/omdb';
-import { upsertMovie, createSaveModal } from '../../services/crud-service';
-import { createMovieDetailsEmbed } from '../../services/movie-service';
-import { createVotingResultsEmbed, createVoteButtonActionRows, calculateResults, convertUserSelectionsToVotingResults } from '../../services/vote-service';
+import { upsertMovie } from '../../services/crud-service';
+import { createSaveModal } from '../../utils/discord-utils';
+import { createMovieDetailsEmbed } from '../../utils/discord-utils';
+import { calculateResults, convertUserSelectionsToVotingResults } from '../../services/vote-service';
+import { createVotingResultsEmbed } from '../../utils/discord-utils';
+import { createVoteButtonActionRows } from '../../utils/discord-utils';
 
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
