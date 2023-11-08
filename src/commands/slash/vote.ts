@@ -1,7 +1,9 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder, SlashCommandBuilder } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, ComponentType, EmbedBuilder, SlashCommandBuilder } from 'discord.js';
 import { MovieData, SlashCommand } from '../../types';
-import { convertUserSelectionsToVotingResults, createVotingResultsEmbed, createMovieDetailsEmbed } from '../../utils';
 import { omdbHandler } from '../../api/omdb';
+import { upsertMovie, createSaveModal } from '../../services/crud-service';
+import { createMovieDetailsEmbed } from '../../services/movie-service';
+import { createVotingResultsEmbed, createVoteButtonActionRows, calculateResults, convertUserSelectionsToVotingResults } from '../../services/vote-service';
 
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -28,6 +30,9 @@ export const command: SlashCommand = {
         .setRequired(false)
     ),
   async execute(interaction) {
+
+    /* Pull user options - start */
+
     // Map to enforce a single selection per user
     const userSelections = new Map<string, string>();
     const emptyResultsEmbed = createVotingResultsEmbed(userSelections, convertUserSelectionsToVotingResults(userSelections), 'Voting has Started!');
@@ -54,9 +59,13 @@ export const command: SlashCommand = {
 
     // Pull input prompt
     let defaultPrompt = 'What is the ranking for this movie?';
+    const currentDate = new Date();
+    const dateString = (currentDate.getMonth() + 1) + '/' + currentDate.getDate() + '/' + currentDate.getFullYear();
     if (movie != '') {
       try {
         movieData = await omdbHandler(movie);
+        movieData.sbigSubmitter = submitter.id;
+        movieData.sbigWatchedDate = dateString;
         defaultPrompt = `What is the ranking for ${movieData.title}?`;
         movieEmbed = createMovieDetailsEmbed(movieData, submitter);
         embedsArray = [movieEmbed, emptyResultsEmbed];
@@ -69,51 +78,15 @@ export const command: SlashCommand = {
     const promptOption = interaction.options.get('prompt');
     const prompt = (promptOption && typeof promptOption.value === 'string') ? promptOption.value : defaultPrompt;
 
-    const sButton = new ButtonBuilder()
-      .setCustomId('👑')
-      .setStyle(ButtonStyle.Primary)
-      .setEmoji('👑');
+    /* Pull user options - end */
 
-    const aButton = new ButtonBuilder()
-      .setCustomId('A')
-      .setStyle(ButtonStyle.Primary)
-      .setLabel('A');
-
-    const bButton = new ButtonBuilder()
-      .setCustomId('B')
-      .setStyle(ButtonStyle.Primary)
-      .setLabel('B');
-
-    const cButton = new ButtonBuilder()
-      .setCustomId('C')
-      .setStyle(ButtonStyle.Primary)
-      .setLabel('C');
-
-    const dButton = new ButtonBuilder()
-      .setCustomId('D')
-      .setStyle(ButtonStyle.Primary)
-      .setLabel('D');
-
-    const fButton = new ButtonBuilder()
-      .setCustomId('F')
-      .setStyle(ButtonStyle.Primary)
-      .setLabel('F');
-
-    const skullButton = new ButtonBuilder()
-      .setCustomId('\uD83D\uDC80')
-      .setStyle(ButtonStyle.Danger)
-      .setEmoji('\uD83D\uDC80');
-
-    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(sButton);
-    const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(aButton, bButton);
-    const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(cButton, dButton, fButton);
-    const row3 = new ActionRowBuilder<ButtonBuilder>().addComponents(skullButton);
+    const actionRows = createVoteButtonActionRows();
 
     try {
-      const response = await interaction.reply({ content: `${prompt} \nTime to Vote: ${minutes} minutes from start time`, components: [row, row1, row2, row3], embeds: embedsArray.map(embed => embed.toJSON()) });
-      const collector = response.createMessageComponentCollector({ componentType: ComponentType.Button, time: milliseconds });
+      const response = await interaction.reply({ content: `${prompt} \nTime to Vote: ${minutes} minutes from start time`, components: actionRows, embeds: embedsArray.map(embed => embed.toJSON()) });
+      const voteCollector = response.createMessageComponentCollector({ componentType: ComponentType.Button, time: milliseconds });
 
-      collector.on('collect', async i => {
+      voteCollector.on('collect', async i => {
         const selection = i.customId;
         userSelections.set(i.user.id, selection);
 
@@ -128,15 +101,19 @@ export const command: SlashCommand = {
         await i.reply({ content: `You selected ${selection}!`, ephemeral: true });
       });
 
-      collector.on('end', () => {
+      voteCollector.on('end', () => {
+        const voteResults = convertUserSelectionsToVotingResults(userSelections);
         const resultsEmbed = createVotingResultsEmbed(userSelections, convertUserSelectionsToVotingResults(userSelections), 'Voting has Ended!');
         if (movie != '') {
           embedsArray = [movieEmbed, resultsEmbed];
+          movieData.sbigVoteResults = JSON.stringify(Object.fromEntries(voteResults), null, '\n').replace(/\n\n/g, '\n');
+          movieData.sbigRank = calculateResults(voteResults);
         }
         else {
           embedsArray = [resultsEmbed];
         }
         interaction.editReply({ content: `${prompt}`, embeds: embedsArray.map(embed => embed.toJSON()), components: [] });
+        saveFollowUpActions(interaction, movieData);
       });
     }
     catch (error) {
@@ -144,3 +121,38 @@ export const command: SlashCommand = {
     }
   },
 };
+
+async function saveFollowUpActions(interaction: ChatInputCommandInteraction, movieData:MovieData) {
+  try {
+    const saveButton = new ButtonBuilder()
+    .setCustomId('Save')
+    .setStyle(ButtonStyle.Success)
+    .setLabel('Save');
+
+    const noButton = new ButtonBuilder()
+    .setCustomId('No')
+    .setStyle(ButtonStyle.Danger)
+    .setLabel('No');
+
+    const followUpButtonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(saveButton, noButton);
+
+    const followUpResponse = await interaction.followUp({ content: 'Would you like to save this result?', components: [followUpButtonRow] });
+    const collector = followUpResponse.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
+    collector.on('collect', async i => {
+      if (i.customId === 'Save') {
+        const savedJsonString = await createSaveModal(i, JSON.stringify(movieData, null, '\n').replace(/\n\n/g, '\n'));
+        const savedJson:MovieData = JSON.parse(savedJsonString);
+        upsertMovie(savedJson, 'sbigMovies.json');
+        i.editReply({ content: `Result saved: \n${savedJson}`, components: [] });
+        collector.stop();
+      }
+      else {
+        collector.stop();
+      }
+    });
+  }
+  catch (error) {
+    console.error(error);
+  }
+}
+

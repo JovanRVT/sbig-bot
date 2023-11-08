@@ -56,6 +56,11 @@ export type ContextMenuCommandFile = {
 };
 
 export type MovieData = {
+  sbigRank: string;
+  sbigNotes: string;
+  sbigWatchedDate: string;
+  sbigSubmitter: string;
+  sbigVoteResults: string,
   title: string;
   plot: string;
   image: string;

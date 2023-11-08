@@ -9,6 +9,7 @@ Based on https://github.com/vercel/nextjs-discord-bot/tree/main
 - Voice Channel rename for countdown update
 - Vote Command
 - Turnorder Command
+- Show Command
 
 ## Helpful Links
 - Phind VSCode Plugin: https://marketplace.visualstudio.com/items?itemName=phind.phind
