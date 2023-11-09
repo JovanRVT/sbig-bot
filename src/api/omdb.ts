@@ -56,7 +56,6 @@ async function convertApiResponseToMovieDataObject(response: Response) : Promise
         throw new Error(`OMDB Service error! message: ${data.Error}`);
     }
     const movieDataToReturn : MovieData = {
-        sbigRank: '',
         sbigWatchedDate: '',
         sbigNotes: '',
         sbigSubmitter: '',
@@ -76,6 +75,7 @@ async function convertApiResponseToMovieDataObject(response: Response) : Promise
         writers: data.Writer,
         boxOffice: data.BoxOffice,
         imdbId: data.imdbID,
+        sbigRank: '',
     };
     return movieDataToReturn;
 }
