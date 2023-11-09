@@ -116,7 +116,7 @@ export const command: SlashCommand = {
           embedsArray = [resultsEmbed];
         }
         interaction.editReply({ content: `${prompt}`, embeds: embedsArray.map(embed => embed.toJSON()), components: [] });
-        saveFollowUpActions(interaction, movieData);
+        saveActions(interaction, movieData);
       });
     }
     catch (error) {
@@ -125,33 +125,28 @@ export const command: SlashCommand = {
   },
 };
 
-async function saveFollowUpActions(interaction: ChatInputCommandInteraction, movieData:MovieData) {
+async function saveActions(interaction: ChatInputCommandInteraction, movieData:MovieData) {
   try {
     const saveButton = new ButtonBuilder()
     .setCustomId('Save')
     .setStyle(ButtonStyle.Success)
     .setLabel('Save');
 
-    const noButton = new ButtonBuilder()
-    .setCustomId('No')
-    .setStyle(ButtonStyle.Danger)
-    .setLabel('No');
+    const saveButtonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(saveButton);
 
-    const followUpButtonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(saveButton, noButton);
-
-    const followUpResponse = await interaction.followUp({ content: 'Would you like to save this result?', components: [followUpButtonRow] });
-    const collector = followUpResponse.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
+    const saveResponse = await interaction.editReply({ content: 'Would you like to save this result?', components: [saveButtonRow] });
+    const collector = saveResponse.createMessageComponentCollector({ componentType: ComponentType.Button, time: 600000 });
     collector.on('collect', async i => {
       if (i.customId === 'Save') {
-        const savedJsonString = await createSaveModal(i, JSON.stringify(movieData, null, '\n').replace(/\n\n/g, '\n'));
-        const savedJson:MovieData = JSON.parse(savedJsonString);
-        upsertMovie(savedJson, 'sbigMovies.json');
-        i.editReply({ content: `Result saved: \n${savedJson}`, components: [] });
+        const savedMovieData = await createSaveModal(i, movieData);
+        upsertMovie(savedMovieData, 'sbigMovies.json');
+        interaction.editReply({ content: 'Saved!', components: [] });
         collector.stop();
       }
-      else {
-        collector.stop();
-      }
+    });
+
+    collector.on('end', () => {
+      interaction.editReply({ components: [] });
     });
   }
   catch (error) {
