@@ -48,3 +48,8 @@ export function convertUserSelectionsToVotingResults(userSelections: Map<string,
 
 	return voteResults;
 }
+
+export function convertVoteResultsStringToMap(voteResults: string) : Map<string, string[]> {
+	const voteResultsObject = JSON.parse(voteResults);
+	return new Map(Object.entries(voteResultsObject));
+}

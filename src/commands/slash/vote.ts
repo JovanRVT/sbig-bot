@@ -38,7 +38,7 @@ export const command: SlashCommand = {
 
     // Map to enforce a single selection per user
     const userSelections = new Map<string, string>();
-    const emptyResultsEmbed = createVotingResultsEmbed(userSelections, convertUserSelectionsToVotingResults(userSelections), 'Voting has Started!');
+    const emptyResultsEmbed = createVotingResultsEmbed(convertUserSelectionsToVotingResults(userSelections), 'Voting has Started!');
     let embedsArray = [emptyResultsEmbed];
 
     // Pull input duration
@@ -91,9 +91,15 @@ export const command: SlashCommand = {
 
       voteCollector.on('collect', async i => {
         const selection = i.customId;
+
+        if (selection == 'End') {
+          voteCollector.stop();
+          return;
+        }
+
         userSelections.set(i.user.id, selection);
 
-        const currentResultsEmbed = createVotingResultsEmbed(userSelections, convertUserSelectionsToVotingResults(userSelections), 'Voting is Live!');
+        const currentResultsEmbed = createVotingResultsEmbed(convertUserSelectionsToVotingResults(userSelections), 'Voting is Live!');
         if (movie != '') {
           embedsArray = [movieEmbed, currentResultsEmbed];
         }
@@ -106,7 +112,7 @@ export const command: SlashCommand = {
 
       voteCollector.on('end', () => {
         const voteResults = convertUserSelectionsToVotingResults(userSelections);
-        const resultsEmbed = createVotingResultsEmbed(userSelections, convertUserSelectionsToVotingResults(userSelections), 'Voting has Ended!');
+        const resultsEmbed = createVotingResultsEmbed(voteResults, 'Voting has Ended!');
         if (movie != '') {
           embedsArray = [movieEmbed, resultsEmbed];
           movieData.sbigVoteResults = JSON.stringify(Object.fromEntries(voteResults), null, '\n').replace(/\n\n/g, '\n');
@@ -132,7 +138,12 @@ async function saveActions(interaction: ChatInputCommandInteraction, movieData:M
     .setStyle(ButtonStyle.Success)
     .setLabel('Save');
 
-    const saveButtonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(saveButton);
+    const cancelButton = new ButtonBuilder()
+    .setCustomId('Cancel')
+    .setStyle(ButtonStyle.Danger)
+    .setLabel('Cancel');
+
+    const saveButtonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(saveButton, cancelButton);
 
     const saveResponse = await interaction.editReply({ content: 'Would you like to save this result?', components: [saveButtonRow] });
     const collector = saveResponse.createMessageComponentCollector({ componentType: ComponentType.Button, time: 600000 });
@@ -141,6 +152,10 @@ async function saveActions(interaction: ChatInputCommandInteraction, movieData:M
         const savedMovieData = await createSaveModal(i, movieData);
         upsertMovie(savedMovieData, 'sbigMovies.json');
         interaction.editReply({ content: 'Saved!', components: [] });
+        collector.stop();
+      }
+      else if (i.customId === 'Cancel') {
+        interaction.editReply({ content: 'Result Not Saved!', components: [] });
         collector.stop();
       }
     });

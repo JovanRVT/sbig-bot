@@ -124,15 +124,21 @@ export function createVoteButtonActionRows(): ActionRowBuilder<ButtonBuilder>[] 
 		.setStyle(ButtonStyle.Danger)
 		.setEmoji('\uD83D\uDC80');
 
+	const endButton = new ButtonBuilder()
+		.setCustomId('End')
+		.setStyle(ButtonStyle.Secondary)
+		.setLabel('End Vote');
+
 	const row = new ActionRowBuilder<ButtonBuilder>().addComponents(sButton);
 	const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(aButton, bButton);
 	const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(cButton, dButton, fButton);
 	const row3 = new ActionRowBuilder<ButtonBuilder>().addComponents(skullButton);
+	const row4 = new ActionRowBuilder<ButtonBuilder>().addComponents(endButton);
 
-	return [row, row1, row2, row3];
+	return [row, row1, row2, row3, row4];
 }
 
-export function createVotingResultsEmbed(userSelections: Map<string, string>, voteResults: Map<string, Array<string>>, description: string): EmbedBuilder {
+export function createVotingResultsEmbed(voteResults: Map<string, Array<string>>, description: string): EmbedBuilder {
 
 	const currentResultsEmbed = new EmbedBuilder()
 		.setColor(39423)
@@ -147,7 +153,7 @@ export function createVotingResultsEmbed(userSelections: Map<string, string>, vo
 			{ name: `${createEmbedNameString(voteResults, 'D')}`, value: `${createEmbedValueString(voteResults, 'D')}`, inline: true },
 			{ name: `${createEmbedNameString(voteResults, 'F')}`, value: `${createEmbedValueString(voteResults, 'F')}`, inline: true },
 			{ name: `${createEmbedNameString(voteResults, '\uD83D\uDC80')}`, value: `${createEmbedValueString(voteResults, '\uD83D\uDC80')}`, inline: true },
-			{ name: 'Total Votes', value: `${userSelections.size}` }
+			{ name: 'Total Votes', value: `${voteResults.size}` }
 		)
 		.setTimestamp()
 		.setFooter({ text: 'So Bad It\'s Good' });
