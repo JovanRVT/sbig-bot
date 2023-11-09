@@ -1,7 +1,8 @@
 import { SlashCommandBuilder } from 'discord.js';
 import { SlashCommand } from '../../types';
 import { omdbHandler } from '../../api/omdb';
-import { createMovieDetailsEmbed } from '../../utils/discord-utils';
+import { createMovieDetailsEmbed, createVotingResultsEmbed } from '../../utils/discord-utils';
+import { convertVoteResultsStringToMap } from '../../services/vote-service';
 
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -21,7 +22,14 @@ export const command: SlashCommand = {
       try {
         const movieData = await omdbHandler(movie);
         const movieEmbed = createMovieDetailsEmbed(movieData, interaction.user);
-        await interaction.reply({ embeds: [movieEmbed] });
+        const embedsArray = [movieEmbed];
+
+        if (movieData.sbigRank != '') {
+          const resultsEmbed = createVotingResultsEmbed(convertVoteResultsStringToMap(movieData.sbigVoteResults), `Results from ${movieData.sbigWatchedDate}`);
+          embedsArray.push(resultsEmbed);
+        }
+
+        await interaction.reply({ embeds: embedsArray.map(embed => embed.toJSON()) });
       } catch (error) {
         movie = '';
         console.error(error);
