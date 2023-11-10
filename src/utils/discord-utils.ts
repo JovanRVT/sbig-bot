@@ -146,13 +146,13 @@ export function createVotingResultsEmbed(voteResults: Map<string, Array<string>>
 		.setDescription(description)
 		// .setThumbnail('https://i.imgur.com/AfFp7pu.png')
 		.addFields(
-			{ name: `${createEmbedNameString(voteResults, '👑')}`, value: `${createEmbedValueString(voteResults, '👑')}`, inline: true },
-			{ name: `${createEmbedNameString(voteResults, 'A')}`, value: `${createEmbedValueString(voteResults, 'A')}`, inline: true },
-			{ name: `${createEmbedNameString(voteResults, 'B')}`, value: `${createEmbedValueString(voteResults, 'B')}`, inline: true },
-			{ name: `${createEmbedNameString(voteResults, 'C')}`, value: `${createEmbedValueString(voteResults, 'C')}`, inline: true },
-			{ name: `${createEmbedNameString(voteResults, 'D')}`, value: `${createEmbedValueString(voteResults, 'D')}`, inline: true },
-			{ name: `${createEmbedNameString(voteResults, 'F')}`, value: `${createEmbedValueString(voteResults, 'F')}`, inline: true },
-			{ name: `${createEmbedNameString(voteResults, '\uD83D\uDC80')}`, value: `${createEmbedValueString(voteResults, '\uD83D\uDC80')}`, inline: true },
+			{ name: `${createVoteResultsEmbedNameString(voteResults, '👑')}`, value: `${createVoteResultsEmbedValueString(voteResults, '👑')}`, inline: true },
+			{ name: `${createVoteResultsEmbedNameString(voteResults, 'A')}`, value: `${createVoteResultsEmbedValueString(voteResults, 'A')}`, inline: true },
+			{ name: `${createVoteResultsEmbedNameString(voteResults, 'B')}`, value: `${createVoteResultsEmbedValueString(voteResults, 'B')}`, inline: true },
+			{ name: `${createVoteResultsEmbedNameString(voteResults, 'C')}`, value: `${createVoteResultsEmbedValueString(voteResults, 'C')}`, inline: true },
+			{ name: `${createVoteResultsEmbedNameString(voteResults, 'D')}`, value: `${createVoteResultsEmbedValueString(voteResults, 'D')}`, inline: true },
+			{ name: `${createVoteResultsEmbedNameString(voteResults, 'F')}`, value: `${createVoteResultsEmbedValueString(voteResults, 'F')}`, inline: true },
+			{ name: `${createVoteResultsEmbedNameString(voteResults, '\uD83D\uDC80')}`, value: `${createVoteResultsEmbedValueString(voteResults, '\uD83D\uDC80')}`, inline: true },
 			{ name: 'Total Votes', value: `${voteResults.size}` }
 		)
 		.setTimestamp()
@@ -161,7 +161,7 @@ export function createVotingResultsEmbed(voteResults: Map<string, Array<string>>
 	return currentResultsEmbed;
 }
 
-function createEmbedValueString(voteResults: Map<string, Array<string>>, vote: string): string {
+function createVoteResultsEmbedValueString(voteResults: Map<string, Array<string>>, vote: string): string {
 	const voters = voteResults.get(vote);
 	if (voters) {
 		return `${voters.map((id) => `<@${id}>`).join(', ')}`;
@@ -171,12 +171,49 @@ function createEmbedValueString(voteResults: Map<string, Array<string>>, vote: s
 	}
 }
 
-function createEmbedNameString(voteResults: Map<string, Array<string>>, vote: string): string {
+function createVoteResultsEmbedNameString(voteResults: Map<string, Array<string>>, vote: string): string {
 	const voters = voteResults.get(vote);
 	if (voters) {
 		return `${vote} - ${voters.length}`;
 	}
 	else {
 		return vote;
+	}
+}
+
+export function createSbigSummaryEmbed(sbigMovieData: MovieData[]): EmbedBuilder {
+    const sbigSummaryEmbed = new EmbedBuilder()
+        .setColor(9662683)
+        .setTitle('SBIG Movie Rankings')
+        .addFields(
+            { name: createSbigSummaryEmbedNameString(sbigMovieData, '👑'), value: createSbigSummaryEmbedValueString(sbigMovieData, '👑') },
+            { name: createSbigSummaryEmbedNameString(sbigMovieData, 'A'), value: createSbigSummaryEmbedValueString(sbigMovieData, 'A') },
+            { name: createSbigSummaryEmbedNameString(sbigMovieData, 'B'), value: createSbigSummaryEmbedValueString(sbigMovieData, 'B') },
+            { name: createSbigSummaryEmbedNameString(sbigMovieData, 'C'), value: createSbigSummaryEmbedValueString(sbigMovieData, 'C') },
+            { name: createSbigSummaryEmbedNameString(sbigMovieData, 'D'), value: createSbigSummaryEmbedValueString(sbigMovieData, 'D') },
+            { name: createSbigSummaryEmbedNameString(sbigMovieData, 'F'), value: createSbigSummaryEmbedValueString(sbigMovieData, 'F') },
+            { name: createSbigSummaryEmbedNameString(sbigMovieData, '\uD83D\uDC80'), value: createSbigSummaryEmbedValueString(sbigMovieData, '\uD83D\uDC80') }
+        );
+
+    return sbigSummaryEmbed;
+}
+
+function createSbigSummaryEmbedValueString(sbigMovieData: MovieData[], rank: string): string {
+	const moviesOfThisRank = sbigMovieData.filter(movie => movie.sbigRank === rank);
+	if (moviesOfThisRank.length > 0) {
+		return `${moviesOfThisRank.map((movieData) => `${movieData.title} - <@${movieData.sbigSubmitter}>`).join('\n')}`;
+	}
+	else {
+		return 'No Movies';
+	}
+}
+
+function createSbigSummaryEmbedNameString(sbigMovieData: MovieData[], rank: string): string {
+	const moviesOfThisRank = sbigMovieData.filter(movie => movie.sbigRank === rank);
+	if (moviesOfThisRank) {
+		return `${rank} - ${moviesOfThisRank.length}`;
+	}
+	else {
+		return rank;
 	}
 }
