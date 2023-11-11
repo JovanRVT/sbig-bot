@@ -10,10 +10,12 @@ Based on https://github.com/vercel/nextjs-discord-bot/tree/main
 - Vote Command
 - Turnorder Command
 - Show Command
+- List Command
 
 ## Helpful Links
 - Phind VSCode Plugin: https://marketplace.visualstudio.com/items?itemName=phind.phind
 - Discord JS Guide: https://discordjs.guide/#before-you-begin
     - Embeds: https://discordjs.guide/popular-topics/embeds.html#using-the-embedbuilder
     - Buttons: https://discordjs.guide/message-components/buttons.html#building-buttons
+- OMDB: https://www.omdbapi.com/
 
