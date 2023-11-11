@@ -23,6 +23,7 @@ export async function createSaveModal(interaction: ButtonInteraction, initialDet
 		.setCustomId('notesInput')
 		.setLabel('Movie Notes')
 		.setValue(initialDetails.sbigNotes)
+		.setRequired(false)
 		.setStyle(TextInputStyle.Short);
 
 		// Create the text input components
