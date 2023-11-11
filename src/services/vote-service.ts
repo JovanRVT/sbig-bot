@@ -53,3 +53,15 @@ export function convertVoteResultsStringToMap(voteResults: string) : Map<string,
 	const voteResultsObject = JSON.parse(voteResults);
 	return new Map(Object.entries(voteResultsObject));
 }
+
+export function convertVotingResultsToUserSelections(votingResults: Map<string,string[]>): Map<string,string> {
+	const userSelections = new Map<string, string>();
+
+	votingResults.forEach((users, vote) => {
+		users.forEach((user) => {
+			userSelections.set(user,vote);
+		})
+	});
+
+	return userSelections;
+}

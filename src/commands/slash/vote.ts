@@ -4,7 +4,7 @@ import { omdbHandler } from '../../api/omdb';
 import { upsertMovie } from '../../services/crud-service';
 import { createSaveModal } from '../../utils/discord-utils';
 import { createMovieDetailsEmbed } from '../../utils/discord-utils';
-import { calculateResults, convertUserSelectionsToVotingResults } from '../../services/vote-service';
+import { calculateResults, convertUserSelectionsToVotingResults, convertVoteResultsStringToMap, convertVotingResultsToUserSelections } from '../../services/vote-service';
 import { createVotingResultsEmbed } from '../../utils/discord-utils';
 import { createVoteButtonActionRows } from '../../utils/discord-utils';
 
@@ -37,9 +37,9 @@ export const command: SlashCommand = {
     /* Pull user options - start */
 
     // Map to enforce a single selection per user
-    const userSelections = new Map<string, string>();
-    const emptyResultsEmbed = createVotingResultsEmbed(convertUserSelectionsToVotingResults(userSelections), 'Voting has Started!');
-    let embedsArray = [emptyResultsEmbed];
+    let userSelections = new Map<string, string>();
+    let initialResultsEmbed = createVotingResultsEmbed(convertUserSelectionsToVotingResults(userSelections), 'Voting has Started!');
+    let embedsArray = [initialResultsEmbed];
 
     // Pull input duration
     const defaultMinutes = 2;
@@ -71,11 +71,17 @@ export const command: SlashCommand = {
         movieData.sbigWatchedDate = dateString;
         defaultPrompt = `What is the ranking for ${movieData.title}?`;
         movieEmbed = createMovieDetailsEmbed(movieData, submitter);
-        embedsArray = [movieEmbed, emptyResultsEmbed];
+
+        // Display previous voting results
+        if (movieData.sbigVoteResults !== '') {
+          userSelections = convertVotingResultsToUserSelections(convertVoteResultsStringToMap(movieData.sbigVoteResults));
+          initialResultsEmbed = createVotingResultsEmbed(convertUserSelectionsToVotingResults(userSelections), 'Voting has Started!');
+        }
+
+        embedsArray = [movieEmbed,initialResultsEmbed];
       } catch (error) {
         movie = '';
         console.error(error);
-        embedsArray = [emptyResultsEmbed];
       }
     }
     const promptOption = interaction.options.get('prompt');
