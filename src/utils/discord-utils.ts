@@ -1,6 +1,6 @@
 import { ButtonInteraction, ModalBuilder, TextInputBuilder, TextInputStyle, User, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
-import { MovieData } from '../types';
-import { calculateResults } from '../services/vote-service';
+import { MovieData, SubmitterScores } from '../types';
+import { calculateAverageVote, calculateResults, getKeyByWeight } from '../services/vote-service';
 
 /* This file is meant for Discord components and formatting */
 
@@ -182,10 +182,11 @@ function createVoteResultsEmbedNameString(voteResults: Map<string, Array<string>
 	}
 }
 
-export function createSbigSummaryEmbed(sbigMovieData: MovieData[]): EmbedBuilder {
+export function createSbigSummaryEmbed(sbigMovieData: MovieData[], title: string): EmbedBuilder {
     const sbigSummaryEmbed = new EmbedBuilder()
         .setColor(9662683)
-        .setTitle('SBIG Movie Rankings')
+        .setTitle(title)
+		.setDescription(`Total Movies: ${sbigMovieData.length}\nAverage: ${calculateAverageVote(sbigMovieData)}`)
         .addFields(
             { name: createSbigSummaryEmbedNameString(sbigMovieData, '👑'), value: createSbigSummaryEmbedValueString(sbigMovieData, '👑') },
             { name: createSbigSummaryEmbedNameString(sbigMovieData, 'A'), value: createSbigSummaryEmbedValueString(sbigMovieData, 'A') },
@@ -193,10 +194,18 @@ export function createSbigSummaryEmbed(sbigMovieData: MovieData[]): EmbedBuilder
             { name: createSbigSummaryEmbedNameString(sbigMovieData, 'C'), value: createSbigSummaryEmbedValueString(sbigMovieData, 'C') },
             { name: createSbigSummaryEmbedNameString(sbigMovieData, 'D'), value: createSbigSummaryEmbedValueString(sbigMovieData, 'D') },
             { name: createSbigSummaryEmbedNameString(sbigMovieData, 'F'), value: createSbigSummaryEmbedValueString(sbigMovieData, 'F') },
-            { name: createSbigSummaryEmbedNameString(sbigMovieData, '\uD83D\uDC80'), value: createSbigSummaryEmbedValueString(sbigMovieData, '\uD83D\uDC80') }
+            { name: createSbigSummaryEmbedNameString(sbigMovieData, '\uD83D\uDC80'), value: createSbigSummaryEmbedValueString(sbigMovieData, '\uD83D\uDC80') },
         );
 
     return sbigSummaryEmbed;
+}
+
+export function createSbigPlayerSummaryEmbed(submitterScores: SubmitterScores[]): EmbedBuilder {
+    const sbigSummaryEmbed = new EmbedBuilder()
+        .setColor(9662683)
+        .setTitle('SBIG Player Rankings');
+
+	return generatePlayerRankings(submitterScores, sbigSummaryEmbed);
 }
 
 function createSbigSummaryEmbedValueString(sbigMovieData: MovieData[], rank: string): string {
@@ -217,4 +226,11 @@ function createSbigSummaryEmbedNameString(sbigMovieData: MovieData[], rank: stri
 	else {
 		return rank;
 	}
+}
+
+function generatePlayerRankings(submitterScores: SubmitterScores[], sbigSummaryEmbed: EmbedBuilder): EmbedBuilder {
+	submitterScores.forEach((submitterScore) => {
+		sbigSummaryEmbed.addFields({ name:` Score: ${submitterScore.totalScore}`, value:`<@${submitterScore.sbigSubmitter}>\nTotal Submissions: ${submitterScore.totalSubmissions}\nAverage Rank: ${submitterScore.averageRank} (${getKeyByWeight(Math.round(Number(submitterScore.averageRank)))})` });
+	});
+    return sbigSummaryEmbed;
 }
