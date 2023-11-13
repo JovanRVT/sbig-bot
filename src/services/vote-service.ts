@@ -1,3 +1,5 @@
+import { MovieData, SubmitterScores } from '../types';
+
 export function calculateResults(voteResults: Map<string, Array<string>>): string {
 	let sum = 0;
 	voteResults.forEach((value, key) => {
@@ -5,10 +7,10 @@ export function calculateResults(voteResults: Map<string, Array<string>>): strin
 
 	});
 	const average = sum / voteResults.size;
-	return getKeyByWeight(Math.ceil(average));
+	return getKeyByWeight(Math.round(average));
 }
 
-function getWeightByKey(key: string): number {
+export function getWeightByKey(key: string): number {
 	switch (key) {
 	case ('👑'): return 6;
 	case ('A'): return 5;
@@ -21,7 +23,7 @@ function getWeightByKey(key: string): number {
 	}
 }
 
-function getKeyByWeight(key: number): string {
+export function getKeyByWeight(key: number): string {
 	switch (key) {
 	case (6): return '👑';
 	case (5): return 'A';
@@ -54,14 +56,47 @@ export function convertVoteResultsStringToMap(voteResults: string) : Map<string,
 	return new Map(Object.entries(voteResultsObject));
 }
 
-export function convertVotingResultsToUserSelections(votingResults: Map<string,string[]>): Map<string,string> {
+export function convertVotingResultsToUserSelections(votingResults: Map<string, string[]>): Map<string, string> {
 	const userSelections = new Map<string, string>();
 
 	votingResults.forEach((users, vote) => {
 		users.forEach((user) => {
-			userSelections.set(user,vote);
-		})
+			userSelections.set(user, vote);
+		});
 	});
 
 	return userSelections;
+}
+
+export function calculateAverageVote(sbigMovies: MovieData[]): string {
+	let sum = 0;
+	sbigMovies.forEach((value) => {
+		sum += getWeightByKey(value.sbigRank);
+
+	});
+	const average = sum / sbigMovies.length;
+	return `${average.toPrecision(3)} (${getKeyByWeight(Math.round(average))})`;
+}
+
+export function calculatePlayerRankings(sbigMovies: MovieData[]): SubmitterScores[] {
+	// Group movies by sbigSubmitter
+    const groupedMovies = sbigMovies.reduce((grouped, movie) => {
+        (grouped[movie.sbigSubmitter] = grouped[movie.sbigSubmitter] || []).push(movie);
+        return grouped;
+    }, {} as Record<string, MovieData[]>);
+
+    // For each sbigSubmitter, calculate total submissions, average rank, and total score
+    const submitterScores = new Array<SubmitterScores>();
+    for (const sbigSubmitter in groupedMovies) {
+        const moviesOfThisSubmitter = groupedMovies[sbigSubmitter];
+        const totalSubmissions = moviesOfThisSubmitter.length;
+        const averageRank = (moviesOfThisSubmitter.reduce((sum, movie) => sum + getWeightByKey(movie.sbigRank), 0) / totalSubmissions).toPrecision(3);
+        const totalScore = moviesOfThisSubmitter.reduce((sum, movie) => sum + getWeightByKey(movie.sbigRank), 0);
+
+        submitterScores.push({ sbigSubmitter, totalSubmissions, averageRank, totalScore });
+    }
+
+    // Sort by totalScore
+    submitterScores.sort((a, b) => b.totalScore - a.totalScore);
+	return submitterScores;
 }

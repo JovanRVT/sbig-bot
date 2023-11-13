@@ -5,7 +5,7 @@ Bad movie night bot
 Based on https://github.com/vercel/nextjs-discord-bot/tree/main
 
 ## Features
-- Keeping rules up to 
+- Keeping rules up to date
 - Voice Channel rename for countdown update
 - Vote Command
 - Turnorder Command

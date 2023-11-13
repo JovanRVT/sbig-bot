@@ -77,3 +77,10 @@ export type MovieData = {
   boxOffice: string;
   imdbId: string;
 }
+
+export type SubmitterScores = {
+  sbigSubmitter: string;
+  totalSubmissions: number;
+  averageRank: string;
+  totalScore: number;
+}

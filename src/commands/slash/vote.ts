@@ -78,7 +78,7 @@ export const command: SlashCommand = {
           initialResultsEmbed = createVotingResultsEmbed(convertUserSelectionsToVotingResults(userSelections), 'Voting has Started!');
         }
 
-        embedsArray = [movieEmbed,initialResultsEmbed];
+        embedsArray = [movieEmbed, initialResultsEmbed];
       } catch (error) {
         movie = '';
         console.error(error);
