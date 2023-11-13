@@ -10,7 +10,7 @@ export function calculateResults(voteResults: Map<string, Array<string>>): strin
 	return getKeyByWeight(Math.round(average));
 }
 
-function getWeightByKey(key: string): number {
+export function getWeightByKey(key: string): number {
 	switch (key) {
 	case ('👑'): return 6;
 	case ('A'): return 5;

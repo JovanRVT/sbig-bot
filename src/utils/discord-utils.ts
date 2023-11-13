@@ -1,4 +1,4 @@
-import { ButtonInteraction, ModalBuilder, TextInputBuilder, TextInputStyle, User, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
+import { ButtonInteraction, ModalBuilder, TextInputBuilder, TextInputStyle, User, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from 'discord.js';
 import { MovieData, SubmitterScores } from '../types';
 import { calculateAverageVote, calculateResults, getKeyByWeight } from '../services/vote-service';
 
@@ -56,7 +56,7 @@ export async function createSaveModal(interaction: ButtonInteraction, initialDet
 
 export function createMovieDetailsEmbed(movieData: MovieData, submitter: User): EmbedBuilder {
     const movieDetailsEmbed = new EmbedBuilder()
-        .setColor(9662683)
+        .setColor(getColorForRank(movieData.sbigRank))
         .setAuthor({ name: submitter.displayName, iconURL: submitter.avatarURL() || undefined })
         .setTitle(movieData.title)
         .setDescription(movieData.plot)
@@ -78,6 +78,44 @@ export function createMovieDetailsEmbed(movieData: MovieData, submitter: User): 
     return movieDetailsEmbed;
 }
 
+export function createMovieSummaryEmbed(movieData: MovieData, submitter: User): EmbedBuilder {
+    const movieDetailsEmbed = new EmbedBuilder()
+        .setColor(getColorForRank(movieData.sbigRank))
+        .setAuthor({ name: submitter.displayName, iconURL: submitter.avatarURL() || undefined })
+        .setTitle(movieData.title)
+        .setDescription(movieData.plot)
+        .addFields(
+            { name: `IMDB Rating: ${movieData.imdbRating}`, value: `${printOtherRatings(movieData.otherRatings)}`, inline: true },
+            { name: 'Year', value: `${movieData.year}`, inline: true },
+            { name: 'Runtime', value: `${movieData.runtime}`, inline: true },
+            { name: 'Genre', value: `${movieData.genre}`, inline: true },
+            { name: 'Rating', value: `${movieData.rating}`, inline: true },
+            { name: 'Box Office', value: `${movieData.boxOffice}`, inline: true },
+            { name: 'Actors', value: `${movieData.actors}`, inline: true },
+            { name: 'Director', value: `${movieData.director}`, inline: true },
+            { name: 'Writers', value: `${movieData.writers}`, inline: true }
+        )
+		.setFooter({ text: `Rank: ${movieData.sbigRank}` });
+
+    if (movieData.image != 'N/A') {
+        movieDetailsEmbed.setThumbnail(movieData.image);
+    }
+    return movieDetailsEmbed;
+}
+
+function getColorForRank(rank: string) {
+	switch (rank) {
+		case ('👑'): return 'Red';
+		case ('A'): return 'Orange';
+		case ('B'): return 'Yellow';
+		case ('C'): return 'Green';
+		case ('D'): return 'Blue';
+		case ('F'): return 'Fuchsia';
+		case ('\uD83D\uDC80'): return 'DarkButNotBlack';
+		default: return 9662683;
+		}
+}
+
 function printOtherRatings(otherRatings: {Source: string, Value: string}[]) : string {
 	let formattedString = '';
 	if (otherRatings.length == 0) {
@@ -89,6 +127,7 @@ function printOtherRatings(otherRatings: {Source: string, Value: string}[]) : st
     }
     return formattedString;
 }
+
 export function createVoteButtonActionRows(): ActionRowBuilder<ButtonBuilder>[] {
 	const sButton = new ButtonBuilder()
 		.setCustomId('👑')
@@ -142,10 +181,9 @@ export function createVoteButtonActionRows(): ActionRowBuilder<ButtonBuilder>[] 
 export function createVotingResultsEmbed(voteResults: Map<string, Array<string>>, description: string): EmbedBuilder {
 
 	const currentResultsEmbed = new EmbedBuilder()
-		.setColor(39423)
+		.setColor(getColorForRank(calculateResults(voteResults)))
 		.setTitle(`Result: ${calculateResults(voteResults)}`)
 		.setDescription(description)
-		// .setThumbnail('https://i.imgur.com/AfFp7pu.png')
 		.addFields(
 			{ name: `${createVoteResultsEmbedNameString(voteResults, '👑')}`, value: `${createVoteResultsEmbedValueString(voteResults, '👑')}`, inline: true },
 			{ name: `${createVoteResultsEmbedNameString(voteResults, 'A')}`, value: `${createVoteResultsEmbedValueString(voteResults, 'A')}`, inline: true },
@@ -233,4 +271,58 @@ function generatePlayerRankings(submitterScores: SubmitterScores[], sbigSummaryE
 		sbigSummaryEmbed.addFields({ name:` Score: ${submitterScore.totalScore}`, value:`<@${submitterScore.sbigSubmitter}>\nTotal Submissions: ${submitterScore.totalSubmissions}\nAverage Rank: ${submitterScore.averageRank} (${getKeyByWeight(Math.round(Number(submitterScore.averageRank)))})` });
 	});
     return sbigSummaryEmbed;
+}
+
+export function createPaginationButtonActionRow(): ActionRowBuilder<ButtonBuilder> {
+	const nextButton = new ButtonBuilder()
+		.setCustomId('Next')
+		.setStyle(ButtonStyle.Primary)
+		.setLabel('Next');
+
+	const prevButton = new ButtonBuilder()
+		.setCustomId('Prev')
+		.setStyle(ButtonStyle.Primary)
+		.setLabel('Prev');
+
+	const firstButton = new ButtonBuilder()
+		.setCustomId('First')
+		.setStyle(ButtonStyle.Primary)
+		.setLabel('First');
+
+	const lastButton = new ButtonBuilder()
+		.setCustomId('Last')
+		.setStyle(ButtonStyle.Primary)
+		.setLabel('Last');
+
+	const stopButton = new ButtonBuilder()
+		.setCustomId('Stop')
+		.setStyle(ButtonStyle.Danger)
+		.setLabel('Stop');
+
+	const row = new ActionRowBuilder<ButtonBuilder>().addComponents(firstButton, prevButton, stopButton, nextButton, lastButton);
+
+	return row;
+}
+
+export function createSelectMenus() {
+	const select = new StringSelectMenuBuilder()
+			.setCustomId('starter')
+			.setPlaceholder('Make a selection!')
+			.addOptions(
+				new StringSelectMenuOptionBuilder()
+					.setLabel('Bulbasaur')
+					.setDescription('The dual-type Grass/Poison Seed Pokémon.')
+					.setValue('bulbasaur'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel('Charmander')
+					.setDescription('The Fire-type Lizard Pokémon.')
+					.setValue('charmander'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel('Squirtle')
+					.setDescription('The Water-type Tiny Turtle Pokémon.')
+					.setValue('squirtle'),
+			);
+
+	const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select);
+	return row;
 }
