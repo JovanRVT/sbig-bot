@@ -57,7 +57,7 @@ async function handleInteractiveMovieList(interaction:ChatInputCommandInteractio
   const selectMenuRow = createSelectMenus();
   let chunkedSbigMovies = chunkArray(sortedSbigMovies, 3);
   let currentPageNo = 0;
-  let totalMovies = sortedSbigMovies.length;
+  let totalMovies = sbigMovies.length;
   let currentPage = chunkedSbigMovies[currentPageNo];
   for (const movie of currentPage) {
     embedsArray.push(createMovieSummaryEmbed(movie, await interaction.client.users.fetch(movie.sbigSubmitter)));
