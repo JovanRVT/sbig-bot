@@ -51,11 +51,13 @@ export const command: SlashCommand = {
 
 async function handleInteractiveMovieList(interaction:ChatInputCommandInteraction, submitter : User | null, sbigMovies:MovieData[], title:string) {
   sbigMovies.sort((a, b) => getWeightByKey(b.sbigRank) - getWeightByKey(a.sbigRank));
+  let sortedSbigMovies = sbigMovies.slice();
   const embedsArray: EmbedBuilder[] = new Array<EmbedBuilder>();
   const paginationRow = createPaginationButtonActionRow();
   const selectMenuRow = createSelectMenus();
-  const chunkedSbigMovies = chunkArray(sbigMovies, 3);
+  let chunkedSbigMovies = chunkArray(sortedSbigMovies, 3);
   let currentPageNo = 0;
+  let totalMovies = sortedSbigMovies.length;
   let currentPage = chunkedSbigMovies[currentPageNo];
   for (const movie of currentPage) {
     embedsArray.push(createMovieSummaryEmbed(movie, await interaction.client.users.fetch(movie.sbigSubmitter)));
@@ -63,17 +65,29 @@ async function handleInteractiveMovieList(interaction:ChatInputCommandInteractio
   // const sbigSummaryEmbed = createSbigSummaryEmbed(sbigMovies, title);
   // const sbigPlayerRankingEmbed = createSbigPlayerSummaryEmbed(calculatePlayerRankings(sbigMovies));
   // embedsArray = [sbigSummaryEmbed, sbigPlayerRankingEmbed];
-  const interactionResponse = await interaction.reply({ content: `${currentPageNo}/${chunkedSbigMovies.length - 1}`, embeds: embedsArray.map(embed => embed.toJSON()), components: [paginationRow, selectMenuRow.toJSON()] });
+  const interactionResponse = await interaction.reply({ content: `Total Movies: ${sbigMovies.length}\n${currentPageNo + 1}/${chunkedSbigMovies.length }`, embeds: embedsArray.map(embed => embed.toJSON()), components: [paginationRow, ...selectMenuRow.map(row => row.toJSON())] });
+  const rankFilterCollector = interactionResponse.createMessageComponentCollector({ componentType: ComponentType.StringSelect, time: 600000 });
+  const submitterFilterCollector = interactionResponse.createMessageComponentCollector({ componentType: ComponentType.UserSelect, time: 600000 });
   const paginationCollector = interactionResponse.createMessageComponentCollector({ componentType: ComponentType.Button, time: 600000 });
 
   paginationCollector.on('collect', async i => {
     const selection = i.customId;
     if (selection === 'Next') {
-      currentPageNo++;
+      if (currentPageNo >= chunkedSbigMovies.length - 1) {
+        currentPageNo = 0;
+      }
+      else {
+        currentPageNo++;
+      }
       currentPage = chunkedSbigMovies[currentPageNo];
       embedsArray.splice(0, embedsArray.length);
     } else if (selection === 'Prev') {
-      currentPageNo--;
+      if (currentPageNo <= 0) {
+        currentPageNo = chunkedSbigMovies.length - 1;
+      }
+      else {
+        currentPageNo--;
+      }
       currentPage = chunkedSbigMovies[currentPageNo];
       embedsArray.splice(0, embedsArray.length);
     } else if (selection === 'Last') {
@@ -93,13 +107,49 @@ async function handleInteractiveMovieList(interaction:ChatInputCommandInteractio
       embedsArray.push(createMovieSummaryEmbed(movie, await interaction.client.users.fetch(movie.sbigSubmitter)));
     }
 
-    interaction.editReply({ content: `${currentPageNo}/${chunkedSbigMovies.length - 1}`, embeds: embedsArray.map(embed => embed.toJSON()) });
+    interaction.editReply({ content: `Total Movies: ${totalMovies}\n ${currentPageNo + 1}/${chunkedSbigMovies.length}`, embeds: embedsArray.map(embed => embed.toJSON()) });
 
   });
 
   paginationCollector.on('end', () => {
 
     interaction.editReply({ content:'end', embeds: [], components: [] });
+  });
+
+  rankFilterCollector.on('collect', async i => {
+    const selection = i.values[0];
+    embedsArray.splice(0, embedsArray.length);
+
+    sortedSbigMovies = sbigMovies.slice();
+    const filteredSbigMovies = sortedSbigMovies.filter(movie => movie.sbigRank === selection);
+    totalMovies = filteredSbigMovies.length;
+    chunkedSbigMovies = chunkArray(filteredSbigMovies, 3);
+    currentPageNo = 0;
+    currentPage = chunkedSbigMovies[currentPageNo];
+    for (const movie of currentPage) {
+      embedsArray.push(createMovieSummaryEmbed(movie, await interaction.client.users.fetch(movie.sbigSubmitter)));
+    }
+
+    interaction.editReply({ content: `Total Movies: ${totalMovies}\n ${currentPageNo + 1}/${chunkedSbigMovies.length }`, embeds: embedsArray.map(embed => embed.toJSON()) });
+
+  });
+
+  submitterFilterCollector.on('collect', async i => {
+    const selection = i.values[0];
+    embedsArray.splice(0, embedsArray.length);
+
+    sortedSbigMovies = sbigMovies.slice();
+    const filteredSbigMovies = sortedSbigMovies.filter(movie => movie.sbigSubmitter === selection);
+    totalMovies = filteredSbigMovies.length;
+    chunkedSbigMovies = chunkArray(filteredSbigMovies, 3);
+    currentPageNo = 0;
+    currentPage = chunkedSbigMovies[currentPageNo];
+    for (const movie of currentPage) {
+      embedsArray.push(createMovieSummaryEmbed(movie, await interaction.client.users.fetch(movie.sbigSubmitter)));
+    }
+
+    interaction.editReply({ content: `Total Movies: ${totalMovies}\n ${currentPageNo + 1}/${chunkedSbigMovies.length }`, embeds: embedsArray.map(embed => embed.toJSON()) });
+
   });
 }
 

@@ -1,4 +1,4 @@
-import { ButtonInteraction, ModalBuilder, TextInputBuilder, TextInputStyle, User, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from 'discord.js';
+import { ButtonInteraction, ModalBuilder, TextInputBuilder, TextInputStyle, User, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, UserSelectMenuBuilder } from 'discord.js';
 import { MovieData, SubmitterScores } from '../types';
 import { calculateAverageVote, calculateResults, getKeyByWeight } from '../services/vote-service';
 
@@ -305,24 +305,37 @@ export function createPaginationButtonActionRow(): ActionRowBuilder<ButtonBuilde
 }
 
 export function createSelectMenus() {
-	const select = new StringSelectMenuBuilder()
-			.setCustomId('starter')
-			.setPlaceholder('Make a selection!')
+	const rankFilter = new StringSelectMenuBuilder()
+			.setCustomId('Rank')
+			.setPlaceholder('Filter by Rank')
 			.addOptions(
 				new StringSelectMenuOptionBuilder()
-					.setLabel('Bulbasaur')
-					.setDescription('The dual-type Grass/Poison Seed Pokémon.')
-					.setValue('bulbasaur'),
+					.setLabel('👑')
+					.setValue('👑'),
 				new StringSelectMenuOptionBuilder()
-					.setLabel('Charmander')
-					.setDescription('The Fire-type Lizard Pokémon.')
-					.setValue('charmander'),
+					.setLabel('A')
+					.setValue('A'),
 				new StringSelectMenuOptionBuilder()
-					.setLabel('Squirtle')
-					.setDescription('The Water-type Tiny Turtle Pokémon.')
-					.setValue('squirtle'),
+					.setLabel('B')
+					.setValue('B'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel('C')
+					.setValue('C'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel('D')
+					.setValue('D'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel('F')
+					.setValue('F'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel('\uD83D\uDC80')
+					.setValue('\uD83D\uDC80'),
 			);
 
-	const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(select);
-	return row;
+	const playerFilter = new UserSelectMenuBuilder()
+					.setCustomId('sbigSubmitter')
+					.setPlaceholder('Filter by Submitter');
+	const row1 = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(rankFilter);
+	const row2 = new ActionRowBuilder<UserSelectMenuBuilder>().addComponents(playerFilter);
+	return [row1, row2];
 }
