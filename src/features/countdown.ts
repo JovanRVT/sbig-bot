@@ -9,7 +9,7 @@ import { remainingTime } from '../utils/utils';
  */
 
 const COUNTDOWN_VOICE_CHANNEL_ID = '1110773018403295264';
-const TARGET_TIME = '13 Nov 2023 19:30:00 GMT-0600';
+const TARGET_TIME = '20 Nov 2023 19:00:00 GMT-0700';
 
 let enabled = true;
 
