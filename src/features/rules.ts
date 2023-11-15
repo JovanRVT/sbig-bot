@@ -44,7 +44,7 @@ const RULES_MESSAGES = [
   
   🗳️ For exceptions to these rules to be made, A) a borderline bad movie must have a majority share of the week’s viewers to be part of the weekly vote or B) a likely good movie must have unanimous support from the week’s viewers
   
-  🤖 If any questions/suggestions on the SBIGBot (https://github.com/JovanRVT/sbig-bot), reach out to a Rune Priest of the Machine God. Please see sbig forum for feature list and backlog.
+  🤖 If any questions/suggestions on the SBIGBot (https://github.com/code-with-jov/sbig-bot), reach out to a Rune Priest of the Machine God. Please see sbig forum for feature list and backlog.
   `,
 ];
 
