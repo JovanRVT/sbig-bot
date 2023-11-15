@@ -38,7 +38,7 @@ export async function createSaveModal(interaction: ButtonInteraction, initialDet
 		const thirdActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(editInput);
 		modal.addComponents(firstActionRow, secondActionRow, thirdActionRow);
 		await interaction.showModal(modal);
-		const modalSubmitInteraction = await interaction.awaitModalSubmit({ time: 120000 });
+		const modalSubmitInteraction = await interaction.awaitModalSubmit({ time: 900000 });
 		const detailsInput = modalSubmitInteraction.fields.getTextInputValue('detailsInput');
 		modalSubmitInteraction.reply({ content: 'Result Saved!', ephemeral: true });
 

@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, ComponentType, EmbedBuilder, SlashCommandBuilder, User } from 'discord.js';
+import { ChatInputCommandInteraction, ComponentType, EmbedBuilder, SlashCommandBuilder, User, hyperlink } from 'discord.js';
 import { MovieData, SlashCommand } from '../../types';
 import { createPaginationButtonActionRow as createPaginationButtonActionRow, createMovieSummaryEmbed, createSbigPlayerSummaryEmbed, createSbigSummaryEmbed, createSelectMenus } from '../../utils/discord-utils';
 import { readMovies } from '../../services/crud-service';
@@ -11,12 +11,12 @@ export const command: SlashCommand = {
     .addBooleanOption(option =>
 			option
 				.setName('interactive')
-				.setDescription('Enable interactive viewing of the SBIG Rankings')
+				.setDescription('Enable interactive (movie details with pagination and filters) viewing of the SBIG Rankings')
 				.setRequired(false))
     .addUserOption(option =>
 			option
 				.setName('user')
-				.setDescription('User to filter movies by')
+				.setDescription('User to filter movies by. Does not apply to interactive.')
 				.setRequired(false)),
 	async execute(interaction) {
 
@@ -29,13 +29,11 @@ export const command: SlashCommand = {
       submitter = submitterOption.user;
     }
 
-    let title = 'SBIG Movie Rankings';
-
     if (interaction.options.get('interactive')) {
-      await handleInteractiveMovieList(interaction, submitter, sbigMovies, title);
+      await handleInteractiveMovieList(interaction, sbigMovies);
     }
     else {
-
+      let title = 'SBIG Movie Rankings';
       if (submitter !== null) {
           sbigMovies = sbigMovies.filter(movie => movie.sbigSubmitter === submitter?.id);
           title += ` for ${submitter.displayName}`;
@@ -44,12 +42,15 @@ export const command: SlashCommand = {
       const sbigSummaryEmbed = createSbigSummaryEmbed(sbigMovies, title);
       const sbigPlayerRankingEmbed = createSbigPlayerSummaryEmbed(calculatePlayerRankings(sbigMovies));
       const embedsArray = [sbigSummaryEmbed, sbigPlayerRankingEmbed];
-      await interaction.reply({ embeds: embedsArray.map(embed => embed.toJSON()) });
+
+      const url = 'https://docs.google.com/spreadsheets/d/1xC3lzmjn7pkE4JXJS7PnbPXJ8c0Kfn8r5aqQo5SOWNo/edit?usp=sharing';
+      const link = hyperlink('Click here for OG Google Sheet List', url);
+      await interaction.reply({ content:link, embeds: embedsArray.map(embed => embed.toJSON()) });
     }
   },
 };
 
-async function handleInteractiveMovieList(interaction:ChatInputCommandInteraction, submitter : User | null, sbigMovies:MovieData[], title:string) {
+async function handleInteractiveMovieList(interaction:ChatInputCommandInteraction, sbigMovies:MovieData[]) {
   sbigMovies.sort((a, b) => getWeightByKey(b.sbigRank) - getWeightByKey(a.sbigRank));
   let sortedSbigMovies = sbigMovies.slice();
   const embedsArray: EmbedBuilder[] = new Array<EmbedBuilder>();
@@ -62,13 +63,11 @@ async function handleInteractiveMovieList(interaction:ChatInputCommandInteractio
   for (const movie of currentPage) {
     embedsArray.push(createMovieSummaryEmbed(movie, await interaction.client.users.fetch(movie.sbigSubmitter)));
   }
-  // const sbigSummaryEmbed = createSbigSummaryEmbed(sbigMovies, title);
-  // const sbigPlayerRankingEmbed = createSbigPlayerSummaryEmbed(calculatePlayerRankings(sbigMovies));
-  // embedsArray = [sbigSummaryEmbed, sbigPlayerRankingEmbed];
+
   const interactionResponse = await interaction.reply({ content: `Total Movies: ${sbigMovies.length}\n${currentPageNo + 1}/${chunkedSbigMovies.length }`, embeds: embedsArray.map(embed => embed.toJSON()), components: [paginationRow, ...selectMenuRow.map(row => row.toJSON())] });
-  const rankFilterCollector = interactionResponse.createMessageComponentCollector({ componentType: ComponentType.StringSelect, time: 600000 });
-  const submitterFilterCollector = interactionResponse.createMessageComponentCollector({ componentType: ComponentType.UserSelect, time: 600000 });
-  const paginationCollector = interactionResponse.createMessageComponentCollector({ componentType: ComponentType.Button, time: 600000 });
+  const rankFilterCollector = interactionResponse.createMessageComponentCollector({ componentType: ComponentType.StringSelect, time: 900000 });
+  const submitterFilterCollector = interactionResponse.createMessageComponentCollector({ componentType: ComponentType.UserSelect, time: 900000 });
+  const paginationCollector = interactionResponse.createMessageComponentCollector({ componentType: ComponentType.Button, time: 900000 });
 
   paginationCollector.on('collect', async i => {
     const selection = i.customId;
