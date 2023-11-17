@@ -3,6 +3,7 @@ import { SlashCommand } from '../../types';
 import { omdbHandler } from '../../api/omdb';
 import { createMovieDetailsEmbed, createVotingResultsEmbed } from '../../utils/discord-utils';
 import { convertVoteResultsStringToMap } from '../../services/vote-service';
+import { logToDevChannel } from '../../utils/utils';
 
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -33,6 +34,7 @@ export const command: SlashCommand = {
       } catch (error) {
         movie = '';
         console.error(error);
+        logToDevChannel(interaction.client, String(error));
         await interaction.reply({ content: 'Error finding the movie. Please double check the title, link, or ID (e.g. tt0130236)', ephemeral:true });
       }
     }
