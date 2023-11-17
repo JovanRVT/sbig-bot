@@ -1,7 +1,7 @@
 import { Client, GuildMember, Message, TextChannel } from 'discord.js';
 
 const MOD_LOG_CHANNEL_ID =
-  process.env.MOD_LOG_CHANNEL_ID ?? '763149438951882792';
+  process.env.MOD_LOG_CHANNEL_ID ?? '1174444869457031290';
 
 const staffRoles = ['next.js', 'moderator', 'vercel'];
 
@@ -86,4 +86,29 @@ export const remainingTime = (
 	const seconds = delta % 60;
 
 	return { days, hours, minutes, seconds };
+};
+
+export const logToDevChannel = async (
+	client: Client,
+	reason: string
+) => {
+	const modLogChannel = client.channels.cache.get(
+		MOD_LOG_CHANNEL_ID
+	) as TextChannel;
+
+	await modLogChannel.send({
+		embeds: [
+			{
+				title: 'Error Occurred',
+				color: 16098851,
+				fields: [
+					{
+						name: 'Reason',
+						value: reason,
+						inline: true,
+					},
+				],
+			},
+		],
+	});
 };

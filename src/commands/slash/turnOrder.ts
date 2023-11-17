@@ -66,8 +66,7 @@ export const command: SlashCommand = {
 
       // Write the new turn order back to the file
       fs.writeFileSync('turnOrder.json', JSON.stringify(turnOrder));
-      await i.reply({ content:'Turn order updated', ephemeral: true });
-      await interaction.editReply({ content:`${replyContent}` });
+      await i.update({ content:`${replyContent}` });
     });
 
     collector.on('end', () => {

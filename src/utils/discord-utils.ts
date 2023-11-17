@@ -1,4 +1,4 @@
-import { ButtonInteraction, ModalBuilder, TextInputBuilder, TextInputStyle, User, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, UserSelectMenuBuilder } from 'discord.js';
+import { ButtonInteraction, ModalBuilder, TextInputBuilder, TextInputStyle, User, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, UserSelectMenuBuilder, bold } from 'discord.js';
 import { MovieData, SubmitterScores } from '../types';
 import { calculateAverageVote, calculateResults, getKeyByWeight } from '../services/vote-service';
 
@@ -59,7 +59,7 @@ export function createMovieDetailsEmbed(movieData: MovieData, submitter: User): 
         .setColor(getColorForRank(movieData.sbigRank))
         .setAuthor({ name: submitter.displayName, iconURL: submitter.avatarURL() || undefined })
         .setTitle(movieData.title)
-        .setDescription(movieData.plot)
+        .setDescription(movieData.plot + addSbigNotes(movieData.sbigNotes))
         .addFields(
             { name: `IMDB Rating: ${movieData.imdbRating}`, value: `${printOtherRatings(movieData.otherRatings)}`, inline: true },
             { name: 'Year', value: `${movieData.year}`, inline: true },
@@ -83,7 +83,7 @@ export function createMovieSummaryEmbed(movieData: MovieData, submitter: User): 
         .setColor(getColorForRank(movieData.sbigRank))
         .setAuthor({ name: submitter.displayName, iconURL: submitter.avatarURL() || undefined })
         .setTitle(movieData.title)
-        .setDescription(movieData.plot)
+        .setDescription(movieData.plot + addSbigNotes(movieData.sbigNotes))
         .addFields(
             { name: `IMDB Rating: ${movieData.imdbRating}`, value: `${printOtherRatings(movieData.otherRatings)}`, inline: true },
             { name: 'Year', value: `${movieData.year}`, inline: true },
@@ -126,6 +126,13 @@ function printOtherRatings(otherRatings: {Source: string, Value: string}[]) : st
         formattedString += `${rating.Source}: ${rating.Value}\n`;
     }
     return formattedString;
+}
+
+function addSbigNotes(sbigNotes : string) : string {
+	if (sbigNotes !== '') {
+		return `\n\n${bold('SBIG Notes:')} ${sbigNotes}`;
+	}
+	return sbigNotes;
 }
 
 export function createVoteButtonActionRows(): ActionRowBuilder<ButtonBuilder>[] {
@@ -330,12 +337,53 @@ export function createSelectMenus() {
 				new StringSelectMenuOptionBuilder()
 					.setLabel('\uD83D\uDC80')
 					.setValue('\uD83D\uDC80'),
-			);
+			)
+			.setMinValues(1)
+			.setMaxValues(7);
 
 	const playerFilter = new UserSelectMenuBuilder()
 					.setCustomId('sbigSubmitter')
-					.setPlaceholder('Filter by Submitter');
+					.setPlaceholder('Filter by Submitter')
+					.setMinValues(1)
+					.setMaxValues(10);
+
+	const numberOfResultsSelector = new StringSelectMenuBuilder()
+			.setCustomId('numberOfResults')
+			.setPlaceholder('Number of results')
+			.addOptions(
+				new StringSelectMenuOptionBuilder()
+					.setLabel('1')
+					.setValue('1'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel('2')
+					.setValue('2'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel('3')
+					.setValue('3'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel('4')
+					.setValue('4'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel('5')
+					.setValue('5'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel('6')
+					.setValue('6'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel('7')
+					.setValue('7'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel('8')
+					.setValue('8'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel('9')
+					.setValue('9'),
+				new StringSelectMenuOptionBuilder()
+					.setLabel('10')
+					.setValue('10'),
+			);
 	const row1 = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(rankFilter);
 	const row2 = new ActionRowBuilder<UserSelectMenuBuilder>().addComponents(playerFilter);
-	return [row1, row2];
+	const row3 = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(numberOfResultsSelector);
+	return [row1, row2, row3];
 }

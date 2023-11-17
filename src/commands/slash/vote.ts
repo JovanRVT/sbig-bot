@@ -7,6 +7,7 @@ import { createMovieDetailsEmbed } from '../../utils/discord-utils';
 import { calculateResults, convertUserSelectionsToVotingResults, convertVoteResultsStringToMap, convertVotingResultsToUserSelections } from '../../services/vote-service';
 import { createVotingResultsEmbed } from '../../utils/discord-utils';
 import { createVoteButtonActionRows } from '../../utils/discord-utils';
+import { logToDevChannel } from '../../utils/utils';
 
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
@@ -71,6 +72,7 @@ export const command: SlashCommand = {
       } catch (error) {
         movie = '';
         console.error(error);
+        logToDevChannel(interaction.client, String(error));
       }
     }
     const promptOption = interaction.options.get('prompt');
@@ -123,6 +125,7 @@ export const command: SlashCommand = {
       });
     }
     catch (error) {
+      logToDevChannel(interaction.client, String(error));
       console.error(error);
     }
   },
@@ -148,7 +151,7 @@ async function saveActions(interaction: ChatInputCommandInteraction, movieData:M
       if (i.customId === 'Save') {
         const savedMovieData = await createSaveModal(i, movieData);
         upsertMovie(savedMovieData, 'sbigMovies.json');
-        interaction.editReply({ content: 'Saved!', components: [] });
+        i.update({ content: 'Saved!', components: [] });
         collector.stop();
       }
       else if (i.customId === 'Cancel') {
@@ -162,6 +165,7 @@ async function saveActions(interaction: ChatInputCommandInteraction, movieData:M
     });
   }
   catch (error) {
+    logToDevChannel(interaction.client, String(error));
     console.error(error);
   }
 }
