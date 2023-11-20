@@ -132,7 +132,7 @@ async function handleInteractiveMovieList(interaction: ChatInputCommandInteracti
         embedsArray = await updateCurrentPageAndEmbeds(currentPageNo, chunkedSbigMovies, interaction);
         i.update({ content: `Total Movies: ${totalMovies}\n ${currentPageNo + 1}/${chunkedSbigMovies.length}`, embeds: embedsArray.map(embed => embed.toJSON()) });
       } catch (error) {
-        logToDevChannel(interaction.client, String(error));
+        logToDevChannel(interaction.client, `Error in rankFilterAndNumberOfResultsCollector ${String(error)}`);
         await i.reply({ content: 'An error occurred while processing your request. Please try again later.', ephemeral: true });
       }
     });
@@ -167,11 +167,12 @@ function chunkArray<T>(array: T[], chunkSize: number): T[][] {
 }
 
 async function updateCurrentPageAndEmbeds(currentPageNo: number, chunkedSbigMovies: MovieData[][], interaction: ChatInputCommandInteraction) {
-  const currentPage = chunkedSbigMovies[currentPageNo];
   const embedsArray = [];
-
-  for (const movie of currentPage) {
-    embedsArray.push(createMovieSummaryEmbed(movie, await interaction.client.users.fetch(movie.sbigSubmitter)));
+  if (chunkedSbigMovies.length > 0) {
+    const currentPage = chunkedSbigMovies[currentPageNo];
+    for (const movie of currentPage) {
+      embedsArray.push(createMovieSummaryEmbed(movie, await interaction.client.users.fetch(movie.sbigSubmitter)));
+    }
   }
 
   return embedsArray;
