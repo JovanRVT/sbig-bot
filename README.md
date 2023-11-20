@@ -1,8 +1,8 @@
 # So Bad It's Good (SBIG) Discord Bot
 
-Bad movie night bot
+Movie Tier List bot
 
-Based on https://github.com/vercel/nextjs-discord-bot/tree/main
+Originally based on https://github.com/vercel/nextjs-discord-bot/tree/main
 
 ## Features
 - Keeping rules up to date
@@ -12,10 +12,33 @@ Based on https://github.com/vercel/nextjs-discord-bot/tree/main
 - Show Command
 - List Command
 
+## Local Setup
+1. Version Control: Install [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) and [clone](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) this repository.
+2. Node Version Manager (nvm): Allows you to quickly install and use different versions of node via the command line. Recommended by [Node Package Manager (npm)](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm): 
+    - https://github.com/nvm-sh/nvm#installing-and-updating
+        - Download Node Version Manager
+    - https://github.com/nvm-sh/nvm#usage
+        - Use Node Version Manager to download the latest release of node. Node.js comes with npm by default.
+3. [Node Package Manager (npm)](https://docs.npmjs.com/about-the-public-npm-registry): Navigate to the root directory of this project and install the necessary packages:
+    ```
+    npm -i
+    ```
+4. Development Environment: Download and Install [Visual Studio Code](https://code.visualstudio.com/Download) and the [Phind VSCode Plugin.](https://marketplace.visualstudio.com/items?itemName=phind.phind)
+5. Discord Configurations: Follow steps to [create an app in discord](https://discord.com/developers/docs/getting-started#step-1-creating-an-app)
+    - The Discord token will be DISCORD_BOT_TOKEN in the .env file
+    - The Account ID will be the DISCORD_CLIENT_ID in the .env file
+    - [Enable Developer Mode](https://helpdeskgeek.com/how-to/how-to-enable-and-use-developer-mode-on-discord/) in discord to see userIDs, etc.
+6. Bot Configurations: Create an SBIGMovies.json, cache.json, and turnOrder.json with just an empty JSON Array like below:
+    ```
+    {[]}
+    ```
+7. OMDB API: [Request an OMDB API key](https://www.omdbapi.com/apikey.aspx), it will be OMDB_ACCESS_TOKEN in the .env
+
+
 ## Helpful Links
-- Phind VSCode Plugin: https://marketplace.visualstudio.com/items?itemName=phind.phind
-- Discord JS Guide: https://discordjs.guide/#before-you-begin
-    - Embeds: https://discordjs.guide/popular-topics/embeds.html#using-the-embedbuilder
-    - Buttons: https://discordjs.guide/message-components/buttons.html#building-buttons
-- OMDB: https://www.omdbapi.com/
+- [Discord JS Guide](https://discordjs.guide/#before-you-begin)
+    - [Embeds](https://discordjs.guide/popular-topics/embeds.html#using-the-embedbuilder)
+    - [Buttons](https://discordjs.guide/message-components/buttons.html#building-buttons)
+    - [Modals](https://discordjs.guide/interactions/modals.html)
+- [OMDB API](https://www.omdbapi.com/)
 
