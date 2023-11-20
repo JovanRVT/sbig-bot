@@ -18,7 +18,7 @@ Originally based on https://github.com/vercel/nextjs-discord-bot/tree/main
     - https://github.com/nvm-sh/nvm#installing-and-updating
         - Download Node Version Manager
     - https://github.com/nvm-sh/nvm#usage
-        - Use Node Version Manager to download the latest release of node. Node.js comes with npm by default.
+        - Use Node Version Manager to download the latest release of node. [Node.js](https://nodejs.org/en/docs/guides/getting-started-guide) comes with npm by default.
 3. [Node Package Manager (npm)](https://docs.npmjs.com/about-the-public-npm-registry): Navigate to the root directory of this project and install the necessary packages:
     ```
     npm -i
