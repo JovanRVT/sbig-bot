@@ -41,4 +41,5 @@ Originally based on https://github.com/vercel/nextjs-discord-bot/tree/main
     - [Buttons](https://discordjs.guide/message-components/buttons.html#building-buttons)
     - [Modals](https://discordjs.guide/interactions/modals.html)
 - [OMDB API](https://www.omdbapi.com/)
+- [Visual Studio Code NodeJS Tutorial](https://code.visualstudio.com/docs/nodejs/nodejs-tutorial)
 
