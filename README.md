@@ -21,7 +21,7 @@ Originally based on https://github.com/vercel/nextjs-discord-bot/tree/main
         - Use Node Version Manager to download the latest release of node. [Node.js](https://nodejs.org/en/docs/guides/getting-started-guide) comes with npm by default.
 3. [Node Package Manager (npm)](https://docs.npmjs.com/about-the-public-npm-registry): Navigate to the root directory of this project and install the necessary packages:
     ```
-    npm -i
+    npm install
     ```
 4. Development Environment: Download and Install [Visual Studio Code](https://code.visualstudio.com/Download) and the [Phind VSCode Plugin.](https://marketplace.visualstudio.com/items?itemName=phind.phind)
 5. Discord Configurations: Follow steps to [create an app in discord](https://discord.com/developers/docs/getting-started#step-1-creating-an-app)
