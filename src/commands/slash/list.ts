@@ -9,6 +9,15 @@ export const command: SlashCommand = {
   data: new SlashCommandBuilder()
     .setName('list')
     .setDescription('List the SBIG Rankings')
+    .addStringOption(option =>
+      option.setName('category')
+        .setDescription('Rank Category for the vote to be saved')
+        .setRequired(true)
+        .addChoices(
+          { name: 'SBIGMovies', value: 'sbigMovies' },
+          { name: 'Anime', value: 'anime' },
+        )
+      )
     .addBooleanOption(option =>
       option
         .setName('interactive')
@@ -21,7 +30,14 @@ export const command: SlashCommand = {
         .setRequired(false)),
   async execute(interaction) {
     try {
-      let sbigMovies: MovieData[] = readMovies('sbigMovies.json');
+      // Pull input category
+      let category = 'SBIGMovies';
+      const categoryOption = interaction.options.get('category')?.value;
+      if (categoryOption) {
+        category = categoryOption as string;
+      }
+
+      let sbigMovies: MovieData[] = readMovies(`${category}.json`);
 
       // Pull input submitter
       const submitterOption = interaction.options.get('user');

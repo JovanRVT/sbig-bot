@@ -14,6 +14,15 @@ export const command: SlashCommand = {
     .setName('vote')
     .setDescription('Triggers a ranking vote. Available for up to 15 minutes.')
     .addStringOption(option =>
+      option.setName('category')
+        .setDescription('Rank Category for the vote to be saved')
+        .setRequired(true)
+        .addChoices(
+          { name: 'SBIGMovies', value: 'sbigMovies' },
+          { name: 'Anime', value: 'anime' },
+        )
+      )
+    .addStringOption(option =>
       option.setName('movie')
         .setDescription('Movie Title, IMDB link, or IMDB ID (e.g. tt0130236)')
         .setRequired(false)
@@ -36,6 +45,13 @@ export const command: SlashCommand = {
     let userSelections = new Map<string, string>();
     let initialResultsEmbed = createVotingResultsEmbed(convertUserSelectionsToVotingResults(userSelections), 'Voting has Started!');
     let embedsArray = [initialResultsEmbed];
+
+    // Pull input category
+    let category = 'SBIGMovies';
+    const categoryOption = interaction.options.get('category')?.value;
+    if (categoryOption) {
+      category = categoryOption as string;
+    }
 
     // Pull input submitter
     const submitterOption = interaction.options.get('submitter');
@@ -121,7 +137,7 @@ export const command: SlashCommand = {
           embedsArray = [resultsEmbed];
         }
         interaction.editReply({ content: `${prompt}`, embeds: embedsArray.map(embed => embed.toJSON()), components: [] });
-        saveActions(interaction, movieData);
+        saveActions(interaction, movieData, category);
       });
     }
     catch (error) {
@@ -131,7 +147,7 @@ export const command: SlashCommand = {
   },
 };
 
-async function saveActions(interaction: ChatInputCommandInteraction, movieData:MovieData) {
+async function saveActions(interaction: ChatInputCommandInteraction, movieData:MovieData, category:string) {
   try {
     const saveButton = new ButtonBuilder()
     .setCustomId('Save')
@@ -150,18 +166,13 @@ async function saveActions(interaction: ChatInputCommandInteraction, movieData:M
     collector.on('collect', async i => {
       if (i.customId === 'Save') {
         const savedMovieData = await createSaveModal(i, movieData);
-        upsertMovie(savedMovieData, 'sbigMovies.json');
-        i.update({ content: 'Saved!', components: [] });
+        upsertMovie(savedMovieData, `${category}.json`);
         collector.stop();
       }
       else if (i.customId === 'Cancel') {
-        interaction.editReply({ content: 'Result Not Saved!', components: [] });
+        i.update({ content: 'Result Not Saved!', components: [] });
         collector.stop();
       }
-    });
-
-    collector.on('end', () => {
-      interaction.editReply({ components: [] });
     });
   }
   catch (error) {
