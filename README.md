@@ -42,4 +42,5 @@ Originally based on https://github.com/vercel/nextjs-discord-bot/tree/main
     - [Modals](https://discordjs.guide/interactions/modals.html)
 - [OMDB API](https://www.omdbapi.com/)
 - [Visual Studio Code NodeJS Tutorial](https://code.visualstudio.com/docs/nodejs/nodejs-tutorial)
+- [Raspberry Pi OS Install](https://www.raspberrypi.com/documentation/computers/getting-started.html#install-using-imager)
 
