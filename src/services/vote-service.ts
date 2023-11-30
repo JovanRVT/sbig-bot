@@ -86,13 +86,13 @@ export function calculatePlayerRankings<T>(tierListEntries: TierListEntry<T>[]):
     for (const submitter in groupedTierListEntries) {
         const entriesByThisSubmitter = groupedTierListEntries[submitter];
         const totalSubmissions = entriesByThisSubmitter.length;
-        const averageSubmissionScore = (entriesByThisSubmitter.reduce((sum, movie) => sum + getWeightByTier(movie.tier), 0) / totalSubmissions).toPrecision(3);
+        const averageSubmissionScore = (entriesByThisSubmitter.reduce((sum, movie) => sum + getWeightByTier(movie.tier), 0) / totalSubmissions).toPrecision(4);
         const totalScore = entriesByThisSubmitter.reduce((sum, movie) => sum + getWeightByTier(movie.tier), 0);
 
         submitterStats.push({ submitter: submitter, totalSubmissions, averageSubmissionScore, totalScore });
     }
 
     // Sort by totalScore
-    submitterStats.sort((a, b) => b.totalScore - a.totalScore);
+    submitterStats.sort((a, b) => (Number(b.averageSubmissionScore) - Number(a.averageSubmissionScore)));
 	return submitterStats;
 }

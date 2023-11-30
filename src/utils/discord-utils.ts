@@ -279,7 +279,9 @@ function createTierListSummaryEmbedNameString<T>(tierListEntries: TierListEntry<
 
 function generatePlayerRankings(submitterStats: SubmitterStats[], summaryEmbed: EmbedBuilder): EmbedBuilder {
 	submitterStats.forEach((submitterStat) => {
-		summaryEmbed.addFields({ name:` Score: ${submitterStat.totalScore}`, value:`<@${submitterStat.submitter}>\nTotal Submissions: ${submitterStat.totalSubmissions}\nTier Average: ${submitterStat.averageSubmissionScore} (${getTierByWeight(Math.round(Number(submitterStat.averageSubmissionScore)))})` });
+		summaryEmbed.addFields({
+			name:` Average: ${submitterStat.averageSubmissionScore} (${getTierByWeight(Math.round(Number(submitterStat.averageSubmissionScore)))})`,
+			value:`<@${submitterStat.submitter}>\nTotal Submissions: ${submitterStat.totalSubmissions}\nScore: ${submitterStat.totalScore}` });
 	});
     return summaryEmbed;
 }
