@@ -1,38 +1,39 @@
-import { MovieData, SubmitterScores } from '../types';
+import { TierListEntry } from '../lib/tier-list-entry';
+import { SubmitterStats, Tier } from '../types';
 
-export function calculateResults(voteResults: Map<string, Array<string>>): string {
+export function calculateResults(voteResults: Map<string, Array<string>>): Tier {
 	let sum = 0;
 	voteResults.forEach((value, key) => {
-		sum += getWeightByKey(key);
+		sum += getWeightByTier(key);
 
 	});
 	const average = sum / voteResults.size;
-	return getKeyByWeight(Math.round(average));
+	return getTierByWeight(Math.round(average));
 }
 
-export function getWeightByKey(key: string): number {
+export function getWeightByTier(key: string): number {
 	switch (key) {
-	case ('👑'): return 6;
-	case ('A'): return 5;
-	case ('B'): return 4;
-	case ('C'): return 3;
-	case ('D'): return 2;
-	case ('F'): return 1;
-	case ('\uD83D\uDC80'): return 0;
+	case (Tier.S): return 6;
+	case (Tier.A): return 5;
+	case (Tier.B): return 4;
+	case (Tier.C): return 3;
+	case (Tier.D): return 2;
+	case (Tier.F): return 1;
+	case (Tier.Skull): return 0;
 	default: return 0;
 	}
 }
 
-export function getKeyByWeight(key: number): string {
+export function getTierByWeight(key: number): Tier {
 	switch (key) {
-	case (6): return '👑';
-	case (5): return 'A';
-	case (4): return 'B';
-	case (3): return 'C';
-	case (2): return 'D';
-	case (1): return 'F';
-	case (0): return '\uD83D\uDC80';
-	default: return 'Does Not Compute';
+	case (6): return Tier.S;
+	case (5): return Tier.A;
+	case (4): return Tier.B;
+	case (3): return Tier.C;
+	case (2): return Tier.D;
+	case (1): return Tier.F;
+	case (0): return Tier.Skull;
+	default: return Tier.Skull;
 	}
 }
 
@@ -51,11 +52,6 @@ export function convertUserSelectionsToVotingResults(userSelections: Map<string,
 	return voteResults;
 }
 
-export function convertVoteResultsStringToMap(voteResults: string) : Map<string, string[]> {
-	const voteResultsObject = JSON.parse(voteResults);
-	return new Map(Object.entries(voteResultsObject));
-}
-
 export function convertVotingResultsToUserSelections(votingResults: Map<string, string[]>): Map<string, string> {
 	const userSelections = new Map<string, string>();
 
@@ -68,35 +64,35 @@ export function convertVotingResultsToUserSelections(votingResults: Map<string, 
 	return userSelections;
 }
 
-export function calculateAverageVote(sbigMovies: MovieData[]): string {
+export function calculateAverageVote<T>(tierListEntries: TierListEntry<T>[]): string {
 	let sum = 0;
-	sbigMovies.forEach((value) => {
-		sum += getWeightByKey(value.sbigRank);
+	tierListEntries.forEach((value) => {
+		sum += getWeightByTier(value.tier);
 
 	});
-	const average = sum / sbigMovies.length;
-	return `${average.toPrecision(3)} (${getKeyByWeight(Math.round(average))})`;
+	const average = sum / tierListEntries.length;
+	return `${average.toPrecision(3)} (${getTierByWeight(Math.round(average))})`;
 }
 
-export function calculatePlayerRankings(sbigMovies: MovieData[]): SubmitterScores[] {
-	// Group movies by sbigSubmitter
-    const groupedMovies = sbigMovies.reduce((grouped, movie) => {
-        (grouped[movie.sbigSubmitter] = grouped[movie.sbigSubmitter] || []).push(movie);
+export function calculatePlayerRankings<T>(tierListEntries: TierListEntry<T>[]): SubmitterStats[] {
+	// Group tierListEntries by submitter
+    const groupedTierListEntries = tierListEntries.reduce((grouped, tierListEntry) => {
+        (grouped[tierListEntry.submitter] = grouped[tierListEntry.submitter] || []).push(tierListEntry);
         return grouped;
-    }, {} as Record<string, MovieData[]>);
+    }, {} as Record<string, TierListEntry<T>[]>);
 
-    // For each sbigSubmitter, calculate total submissions, average rank, and total score
-    const submitterScores = new Array<SubmitterScores>();
-    for (const sbigSubmitter in groupedMovies) {
-        const moviesOfThisSubmitter = groupedMovies[sbigSubmitter];
-        const totalSubmissions = moviesOfThisSubmitter.length;
-        const averageRank = (moviesOfThisSubmitter.reduce((sum, movie) => sum + getWeightByKey(movie.sbigRank), 0) / totalSubmissions).toPrecision(3);
-        const totalScore = moviesOfThisSubmitter.reduce((sum, movie) => sum + getWeightByKey(movie.sbigRank), 0);
+    // For each submitter, calculate total submissions, average rank, and total score
+    const submitterStats = new Array<SubmitterStats>();
+    for (const submitter in groupedTierListEntries) {
+        const entriesByThisSubmitter = groupedTierListEntries[submitter];
+        const totalSubmissions = entriesByThisSubmitter.length;
+        const averageSubmissionScore = (entriesByThisSubmitter.reduce((sum, movie) => sum + getWeightByTier(movie.tier), 0) / totalSubmissions).toPrecision(3);
+        const totalScore = entriesByThisSubmitter.reduce((sum, movie) => sum + getWeightByTier(movie.tier), 0);
 
-        submitterScores.push({ sbigSubmitter, totalSubmissions, averageRank, totalScore });
+        submitterStats.push({ submitter: submitter, totalSubmissions, averageSubmissionScore, totalScore });
     }
 
     // Sort by totalScore
-    submitterScores.sort((a, b) => b.totalScore - a.totalScore);
-	return submitterScores;
+    submitterStats.sort((a, b) => b.totalScore - a.totalScore);
+	return submitterStats;
 }
