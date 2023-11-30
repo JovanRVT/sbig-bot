@@ -27,7 +27,10 @@ export const command: SlashCommand = {
       try {
         const movieData = await omdbHandler(movie);
         // Check if already exists
-        const dbResponse = await TierListEntry.findOne({ where: { externalDataId:{ [Op.eq]:movieData.imdbId } } }) as TierListEntry<OmdbData> | null;
+        const dbResponse = await TierListEntry.findOne({ where: {
+            externalDataId:{ [Op.eq]:movieData.imdbId },
+            guildId: { [Op.eq]: interaction.guildId } },
+          }) as TierListEntry<OmdbData> | null;
         if (!dbResponse) {
           // New Movie
           tierListEntry.externalData = movieData;

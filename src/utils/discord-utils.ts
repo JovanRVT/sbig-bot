@@ -1,4 +1,4 @@
-import { ButtonInteraction, ModalBuilder, TextInputBuilder, TextInputStyle, User, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, UserSelectMenuBuilder } from 'discord.js';
+import { ButtonInteraction, ModalBuilder, TextInputBuilder, TextInputStyle, User, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, UserSelectMenuBuilder, hyperlink } from 'discord.js';
 import { SubmitterStats, Tier } from '../types';
 import { calculateAverageVote, calculateResults, getTierByWeight } from '../services/vote-service';
 import { TierListEntry } from '../lib/tier-list-entry';
@@ -68,6 +68,7 @@ export function createMovieDetailsEmbed(omdbData: OmdbData, submitter: User, not
         .setColor(getColorForTier('default'))
         .setAuthor({ name: submitter.displayName, iconURL: submitter.avatarURL() || undefined })
         .setTitle(omdbData.title)
+		.setURL(createImdbLink(omdbData.imdbId))
         .setDescription(omdbData.plot + notes)
         .addFields(
             { name: `IMDB Rating: ${omdbData.imdbRating}`, value: `${omdbData.printOtherRatings()}`, inline: true },
@@ -87,6 +88,10 @@ export function createMovieDetailsEmbed(omdbData: OmdbData, submitter: User, not
     return movieDetailsEmbed;
 }
 
+function createImdbLink(imdbId: string): string {
+	return 'https://www.imdb.com/title/' + imdbId;
+}
+
 export function createTierListEntrySummaryEmbed<T>(tierListEntry: TierListEntry<T>, submitter: User): EmbedBuilder {
     const tierListEntrySummaryEmbed = new EmbedBuilder()
         .setColor(getColorForTier(tierListEntry.tier))
@@ -98,6 +103,7 @@ export function createTierListEntrySummaryEmbed<T>(tierListEntry: TierListEntry<
 		const movieData = tierListEntry.generateOmdbData();
 		if (movieData) {
 			tierListEntrySummaryEmbed.setTitle(movieData.title)
+			.setURL(createImdbLink(movieData.imdbId))
 			.setDescription(movieData.plot + tierListEntry.formatNotesString())
 			.addFields(
 				{ name: `IMDB Rating: ${movieData.imdbRating}`, value: movieData.printOtherRatings(), inline: true },
@@ -254,7 +260,7 @@ export function createPlayerSummaryEmbed(submitterScores: SubmitterStats[]): Emb
 function createTierListSummaryEmbedValueString<T>(tierListEntries: TierListEntry<T>[], tier: string): string {
 	const entriesOfThisRank = tierListEntries.filter(entry => entry.tier === tier);
 	if (entriesOfThisRank.length > 0) {
-		return `${entriesOfThisRank.map((entryData) => `${(entryData.externalData as OmdbData).title} - <@${entryData.submitter}>`).join('\n')}`;
+		return `${entriesOfThisRank.map((entryData) => `${hyperlink((entryData.externalData as OmdbData).title, createImdbLink(entryData.externalDataId as string))} - <@${entryData.submitter}>`).join('\n')}`;
 	}
 	else {
 		return 'No Entries';

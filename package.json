@@ -9,6 +9,7 @@
     "dev": "ts-node-dev src/index.ts",
     "dev:register-commands": "DEV=true ts-node ./src/register-commands.ts",
     "register-commands": "ts-node ./src/register-commands.ts",
+    "import-export": "ts-node ./src/import-export.ts",
     "build": "tsc",
     "lint": "eslint src",
     "test": "jest"
