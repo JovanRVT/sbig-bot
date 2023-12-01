@@ -1,6 +1,6 @@
-# So Bad It's Good (SBIG) Discord Bot
+# Tier List Discord Bot
 
-Movie Tier List bot
+Tier List bot
 
 Originally based on https://github.com/vercel/nextjs-discord-bot/tree/main
 
