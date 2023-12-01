@@ -1,10 +1,13 @@
-import { ButtonInteraction, ModalBuilder, TextInputBuilder, TextInputStyle, User, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, UserSelectMenuBuilder, bold } from 'discord.js';
-import { MovieData, SubmitterScores } from '../types';
-import { calculateAverageVote, calculateResults, getKeyByWeight } from '../services/vote-service';
+import { ButtonInteraction, ModalBuilder, TextInputBuilder, TextInputStyle, User, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, UserSelectMenuBuilder, hyperlink } from 'discord.js';
+import { SubmitterStats, Tier } from '../types';
+import { calculateAverageVote, calculateResults, getTierByWeight } from '../services/vote-service';
+import { TierListEntry } from '../lib/tier-list-entry';
+import { OmdbData } from '../lib/omdb-data';
+import { logToDevChannel } from './utils';
 
 /* This file is meant for Discord components and formatting */
 
-export async function createSaveModal(interaction: ButtonInteraction, initialDetails: MovieData): Promise<MovieData> {
+export async function createSaveModal<T>(interaction: ButtonInteraction, initialDetails: TierListEntry<T>): Promise<TierListEntry<T>> {
 	try {
 		// Create the modal
 		const modal = new ModalBuilder()
@@ -12,164 +15,165 @@ export async function createSaveModal(interaction: ButtonInteraction, initialDet
 			.setTitle('Result to Save');
 
 		// Create the text input components
-		const editRankInput = new TextInputBuilder()
-		.setCustomId('rankInput')
-		.setLabel('SBIGRank')
-		.setValue(initialDetails.sbigRank)
+		const categoryInput = new TextInputBuilder()
+		.setCustomId('categoryInput')
+		.setLabel('Category')
+		.setValue('SBIGMovies')
 		.setStyle(TextInputStyle.Short);
 
 		// Create the text input components
-		const sbigNotesInput = new TextInputBuilder()
+		const editTierInput = new TextInputBuilder()
+		.setCustomId('tierInput')
+		.setLabel('Tier')
+		.setValue(initialDetails.tier)
+		.setStyle(TextInputStyle.Short);
+
+		// Create the text input components
+		const notesInput = new TextInputBuilder()
 		.setCustomId('notesInput')
-		.setLabel('Movie Notes')
-		.setValue(initialDetails.sbigNotes)
+		.setLabel('Notes')
+		.setValue(initialDetails.notes)
 		.setRequired(false)
 		.setStyle(TextInputStyle.Short);
 
 		// Create the text input components
 		const editInput = new TextInputBuilder()
 			.setCustomId('detailsInput')
-			.setLabel('Any Corrections?')
+			.setLabel('Tier List Entry As JSON (Read-Only)')
 			.setValue(JSON.stringify(initialDetails, null, '\n').replace(/\n\n/g, '\n'))
 			.setStyle(TextInputStyle.Paragraph);
 
-		const firstActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(editRankInput);
-		const secondActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(sbigNotesInput);
-		const thirdActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(editInput);
-		modal.addComponents(firstActionRow, secondActionRow, thirdActionRow);
+		const firstActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(categoryInput);
+		const secondActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(editTierInput);
+		const thirdActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(notesInput);
+		const fourthActionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(editInput);
+		modal.addComponents(firstActionRow, secondActionRow, thirdActionRow, fourthActionRow);
+
 		await interaction.showModal(modal);
 		const modalSubmitInteraction = await interaction.awaitModalSubmit({ time: 900000 });
-		const detailsInput = modalSubmitInteraction.fields.getTextInputValue('detailsInput');
-		modalSubmitInteraction.reply({ content: 'Result Saved!', ephemeral: true });
 
-        const savedMovie:MovieData = JSON.parse(detailsInput);
-		savedMovie.sbigRank = modalSubmitInteraction.fields.getTextInputValue('rankInput');
-
-		savedMovie.sbigNotes = modalSubmitInteraction.fields.getTextInputValue('notesInput');
-
-		return savedMovie;
+		initialDetails.tier = modalSubmitInteraction.fields.getTextInputValue('tierInput') as Tier;
+		initialDetails.notes = modalSubmitInteraction.fields.getTextInputValue('notesInput');
+		initialDetails.category = modalSubmitInteraction.fields.getTextInputValue('categoryInput');
+		return initialDetails;
 	} catch (error) {
 		console.error(error);
+		logToDevChannel(interaction.client, String(error));
 		return initialDetails;
 	}
 }
 
-export function createMovieDetailsEmbed(movieData: MovieData, submitter: User): EmbedBuilder {
+export function createMovieDetailsEmbed(omdbData: OmdbData, submitter: User, notes: string): EmbedBuilder {
     const movieDetailsEmbed = new EmbedBuilder()
-        .setColor(getColorForRank(movieData.sbigRank))
+        .setColor(getColorForTier('default'))
         .setAuthor({ name: submitter.displayName, iconURL: submitter.avatarURL() || undefined })
-        .setTitle(movieData.title)
-        .setDescription(movieData.plot + addSbigNotes(movieData.sbigNotes))
+        .setTitle(omdbData.title)
+		.setURL(createImdbLink(omdbData.imdbId))
+        .setDescription(omdbData.plot + notes)
         .addFields(
-            { name: `IMDB Rating: ${movieData.imdbRating}`, value: `${printOtherRatings(movieData.otherRatings)}`, inline: true },
-            { name: 'Year', value: `${movieData.year}`, inline: true },
-            { name: 'Runtime', value: `${movieData.runtime}`, inline: true },
-            { name: 'Genre', value: `${movieData.genre}`, inline: true },
-            { name: 'Rating', value: `${movieData.rating}`, inline: true },
-            { name: 'Box Office', value: `${movieData.boxOffice}`, inline: true },
-            { name: 'Actors', value: `${movieData.actors}`, inline: true },
-            { name: 'Director', value: `${movieData.director}`, inline: true },
-            { name: 'Writers', value: `${movieData.writers}`, inline: true }
+            { name: `IMDB Rating: ${omdbData.imdbRating}`, value: `${omdbData.printOtherRatings()}`, inline: true },
+            { name: 'Year', value: `${omdbData.year}`, inline: true },
+            { name: 'Runtime', value: `${omdbData.runtime}`, inline: true },
+            { name: 'Genre', value: `${omdbData.genre}`, inline: true },
+            { name: 'Rating', value: `${omdbData.rating}`, inline: true },
+            { name: 'Box Office', value: `${omdbData.boxOffice}`, inline: true },
+            { name: 'Actors', value: `${omdbData.actors}`, inline: true },
+            { name: 'Director', value: `${omdbData.director}`, inline: true },
+            { name: 'Writers', value: `${omdbData.writers}`, inline: true }
         );
 
-    if (movieData.image != 'N/A') {
-        movieDetailsEmbed.setImage(movieData.image);
+    if (omdbData.image != 'N/A') {
+        movieDetailsEmbed.setImage(omdbData.image);
     }
     return movieDetailsEmbed;
 }
 
-export function createMovieSummaryEmbed(movieData: MovieData, submitter: User): EmbedBuilder {
-    const movieDetailsEmbed = new EmbedBuilder()
-        .setColor(getColorForRank(movieData.sbigRank))
+function createImdbLink(imdbId: string): string {
+	return 'https://www.imdb.com/title/' + imdbId;
+}
+
+export function createTierListEntrySummaryEmbed<T>(tierListEntry: TierListEntry<T>, submitter: User): EmbedBuilder {
+    const tierListEntrySummaryEmbed = new EmbedBuilder()
+        .setColor(getColorForTier(tierListEntry.tier))
         .setAuthor({ name: submitter.displayName, iconURL: submitter.avatarURL() || undefined })
-        .setTitle(movieData.title)
-        .setDescription(movieData.plot + addSbigNotes(movieData.sbigNotes))
-        .addFields(
-            { name: `IMDB Rating: ${movieData.imdbRating}`, value: `${printOtherRatings(movieData.otherRatings)}`, inline: true },
-            { name: 'Year', value: `${movieData.year}`, inline: true },
-            { name: 'Runtime', value: `${movieData.runtime}`, inline: true },
-            { name: 'Genre', value: `${movieData.genre}`, inline: true },
-            { name: 'Rating', value: `${movieData.rating}`, inline: true },
-            { name: 'Box Office', value: `${movieData.boxOffice}`, inline: true },
-            { name: 'Actors', value: `${movieData.actors}`, inline: true },
-            { name: 'Director', value: `${movieData.director}`, inline: true },
-            { name: 'Writers', value: `${movieData.writers}`, inline: true }
-        )
-		.setFooter({ text: `Rank: ${movieData.sbigRank}` });
+		.setFooter({ text: `${tierListEntry.category} - ${tierListEntry.tier} tier` });
 
-    if (movieData.image != 'N/A') {
-        movieDetailsEmbed.setThumbnail(movieData.image);
-    }
-    return movieDetailsEmbed;
+
+	if (tierListEntry.isExternalDataOmdbData(tierListEntry.externalData)) {
+		const movieData = tierListEntry.generateOmdbData();
+		if (movieData) {
+			tierListEntrySummaryEmbed.setTitle(movieData.title)
+			.setURL(createImdbLink(movieData.imdbId))
+			.setDescription(movieData.plot + tierListEntry.formatNotesString())
+			.addFields(
+				{ name: `IMDB Rating: ${movieData.imdbRating}`, value: movieData.printOtherRatings(), inline: true },
+				{ name: 'Year', value: `${movieData.year}`, inline: true },
+				{ name: 'Runtime', value: `${movieData.runtime}`, inline: true },
+				{ name: 'Genre', value: `${movieData.genre}`, inline: true },
+				{ name: 'Rating', value: `${movieData.rating}`, inline: true },
+				{ name: 'Box Office', value: `${movieData.boxOffice}`, inline: true },
+				{ name: 'Actors', value: `${movieData.actors}`, inline: true },
+				{ name: 'Director', value: `${movieData.director}`, inline: true },
+				{ name: 'Writers', value: `${movieData.writers}`, inline: true }
+			);
+
+			if (movieData.image != 'N/A') {
+				tierListEntrySummaryEmbed.setThumbnail(movieData.image);
+			}
+		}
+	}
+
+    return tierListEntrySummaryEmbed;
 }
 
-function getColorForRank(rank: string) {
+function getColorForTier(rank: string) {
 	switch (rank) {
-		case ('👑'): return 'Red';
-		case ('A'): return 'Orange';
-		case ('B'): return 'Yellow';
-		case ('C'): return 'Green';
-		case ('D'): return 'Blue';
-		case ('F'): return 'Fuchsia';
-		case ('\uD83D\uDC80'): return 'DarkButNotBlack';
+		case (Tier.S): return 'Red';
+		case (Tier.A): return 'Orange';
+		case (Tier.B): return 'Yellow';
+		case (Tier.C): return 'Green';
+		case (Tier.D): return 'Blue';
+		case (Tier.F): return 'Fuchsia';
+		case (Tier.Skull): return 'DarkButNotBlack';
 		default: return 9662683;
 		}
 }
 
-function printOtherRatings(otherRatings: {Source: string, Value: string}[]) : string {
-	let formattedString = '';
-	if (otherRatings.length == 0) {
-		return ' ';
-	}
-
-    for (const rating of otherRatings) {
-        formattedString += `${rating.Source}: ${rating.Value}\n`;
-    }
-    return formattedString;
-}
-
-function addSbigNotes(sbigNotes : string) : string {
-	if (sbigNotes !== '') {
-		return `\n\n${bold('SBIG Notes:')} ${sbigNotes}`;
-	}
-	return sbigNotes;
-}
-
 export function createVoteButtonActionRows(): ActionRowBuilder<ButtonBuilder>[] {
 	const sButton = new ButtonBuilder()
-		.setCustomId('👑')
+		.setCustomId(Tier.S)
 		.setStyle(ButtonStyle.Primary)
-		.setEmoji('👑');
+		.setEmoji(Tier.S);
 
 	const aButton = new ButtonBuilder()
-		.setCustomId('A')
+		.setCustomId(Tier.A)
 		.setStyle(ButtonStyle.Primary)
-		.setLabel('A');
+		.setLabel(Tier.A);
 
 	const bButton = new ButtonBuilder()
-		.setCustomId('B')
+		.setCustomId(Tier.B)
 		.setStyle(ButtonStyle.Primary)
-		.setLabel('B');
+		.setLabel(Tier.B);
 
 	const cButton = new ButtonBuilder()
-		.setCustomId('C')
+		.setCustomId(Tier.C)
 		.setStyle(ButtonStyle.Primary)
-		.setLabel('C');
+		.setLabel(Tier.C);
 
 	const dButton = new ButtonBuilder()
-		.setCustomId('D')
+		.setCustomId(Tier.D)
 		.setStyle(ButtonStyle.Primary)
-		.setLabel('D');
+		.setLabel(Tier.D);
 
 	const fButton = new ButtonBuilder()
-		.setCustomId('F')
+		.setCustomId(Tier.F)
 		.setStyle(ButtonStyle.Primary)
-		.setLabel('F');
+		.setLabel(Tier.F);
 
 	const skullButton = new ButtonBuilder()
-		.setCustomId('\uD83D\uDC80')
+		.setCustomId(Tier.Skull)
 		.setStyle(ButtonStyle.Danger)
-		.setEmoji('\uD83D\uDC80');
+		.setEmoji(Tier.Skull);
 
 	const endButton = new ButtonBuilder()
 		.setCustomId('End')
@@ -188,17 +192,17 @@ export function createVoteButtonActionRows(): ActionRowBuilder<ButtonBuilder>[] 
 export function createVotingResultsEmbed(voteResults: Map<string, Array<string>>, description: string): EmbedBuilder {
 
 	const currentResultsEmbed = new EmbedBuilder()
-		.setColor(getColorForRank(calculateResults(voteResults)))
+		.setColor(getColorForTier(calculateResults(voteResults)))
 		.setTitle(`Result: ${calculateResults(voteResults)}`)
 		.setDescription(description)
 		.addFields(
-			{ name: `${createVoteResultsEmbedNameString(voteResults, '👑')}`, value: `${createVoteResultsEmbedValueString(voteResults, '👑')}`, inline: true },
-			{ name: `${createVoteResultsEmbedNameString(voteResults, 'A')}`, value: `${createVoteResultsEmbedValueString(voteResults, 'A')}`, inline: true },
-			{ name: `${createVoteResultsEmbedNameString(voteResults, 'B')}`, value: `${createVoteResultsEmbedValueString(voteResults, 'B')}`, inline: true },
-			{ name: `${createVoteResultsEmbedNameString(voteResults, 'C')}`, value: `${createVoteResultsEmbedValueString(voteResults, 'C')}`, inline: true },
-			{ name: `${createVoteResultsEmbedNameString(voteResults, 'D')}`, value: `${createVoteResultsEmbedValueString(voteResults, 'D')}`, inline: true },
-			{ name: `${createVoteResultsEmbedNameString(voteResults, 'F')}`, value: `${createVoteResultsEmbedValueString(voteResults, 'F')}`, inline: true },
-			{ name: `${createVoteResultsEmbedNameString(voteResults, '\uD83D\uDC80')}`, value: `${createVoteResultsEmbedValueString(voteResults, '\uD83D\uDC80')}`, inline: true },
+			{ name: `${createVoteResultsEmbedNameString(voteResults, Tier.S)}`, value: `${createVoteResultsEmbedValueString(voteResults, Tier.S)}`, inline: true },
+			{ name: `${createVoteResultsEmbedNameString(voteResults, Tier.A)}`, value: `${createVoteResultsEmbedValueString(voteResults, Tier.A)}`, inline: true },
+			{ name: `${createVoteResultsEmbedNameString(voteResults, Tier.B)}`, value: `${createVoteResultsEmbedValueString(voteResults, Tier.B)}`, inline: true },
+			{ name: `${createVoteResultsEmbedNameString(voteResults, Tier.C)}`, value: `${createVoteResultsEmbedValueString(voteResults, Tier.C)}`, inline: true },
+			{ name: `${createVoteResultsEmbedNameString(voteResults, Tier.D)}`, value: `${createVoteResultsEmbedValueString(voteResults, Tier.D)}`, inline: true },
+			{ name: `${createVoteResultsEmbedNameString(voteResults, Tier.F)}`, value: `${createVoteResultsEmbedValueString(voteResults, Tier.F)}`, inline: true },
+			{ name: `${createVoteResultsEmbedNameString(voteResults, Tier.Skull)}`, value: `${createVoteResultsEmbedValueString(voteResults, Tier.Skull)}`, inline: true },
 			{ name: 'Total Votes', value: `${voteResults.size}` }
 		)
 		.setTimestamp()
@@ -227,57 +231,59 @@ function createVoteResultsEmbedNameString(voteResults: Map<string, Array<string>
 	}
 }
 
-export function createSbigSummaryEmbed(sbigMovieData: MovieData[], title: string): EmbedBuilder {
-    const sbigSummaryEmbed = new EmbedBuilder()
+export function createTierListSummaryEmbed<T>(tierListEntries: TierListEntry<T>[], title: string): EmbedBuilder {
+    const tierListSummaryEmbed = new EmbedBuilder()
         .setColor(9662683)
         .setTitle(title)
-		.setDescription(`Total Movies: ${sbigMovieData.length}\nAverage: ${calculateAverageVote(sbigMovieData)}`)
+		.setDescription(`Total: ${tierListEntries.length}\nAverage: ${calculateAverageVote(tierListEntries)}`)
         .addFields(
-            { name: createSbigSummaryEmbedNameString(sbigMovieData, '👑'), value: createSbigSummaryEmbedValueString(sbigMovieData, '👑') },
-            { name: createSbigSummaryEmbedNameString(sbigMovieData, 'A'), value: createSbigSummaryEmbedValueString(sbigMovieData, 'A') },
-            { name: createSbigSummaryEmbedNameString(sbigMovieData, 'B'), value: createSbigSummaryEmbedValueString(sbigMovieData, 'B') },
-            { name: createSbigSummaryEmbedNameString(sbigMovieData, 'C'), value: createSbigSummaryEmbedValueString(sbigMovieData, 'C') },
-            { name: createSbigSummaryEmbedNameString(sbigMovieData, 'D'), value: createSbigSummaryEmbedValueString(sbigMovieData, 'D') },
-            { name: createSbigSummaryEmbedNameString(sbigMovieData, 'F'), value: createSbigSummaryEmbedValueString(sbigMovieData, 'F') },
-            { name: createSbigSummaryEmbedNameString(sbigMovieData, '\uD83D\uDC80'), value: createSbigSummaryEmbedValueString(sbigMovieData, '\uD83D\uDC80') },
+            { name: createTierListSummaryEmbedNameString(tierListEntries, Tier.S), value: createTierListSummaryEmbedValueString(tierListEntries, Tier.S) },
+            { name: createTierListSummaryEmbedNameString(tierListEntries, Tier.A), value: createTierListSummaryEmbedValueString(tierListEntries, Tier.A) },
+            { name: createTierListSummaryEmbedNameString(tierListEntries, Tier.B), value: createTierListSummaryEmbedValueString(tierListEntries, Tier.B) },
+            { name: createTierListSummaryEmbedNameString(tierListEntries, Tier.C), value: createTierListSummaryEmbedValueString(tierListEntries, Tier.C) },
+            { name: createTierListSummaryEmbedNameString(tierListEntries, Tier.D), value: createTierListSummaryEmbedValueString(tierListEntries, Tier.D) },
+            { name: createTierListSummaryEmbedNameString(tierListEntries, Tier.F), value: createTierListSummaryEmbedValueString(tierListEntries, Tier.F) },
+            { name: createTierListSummaryEmbedNameString(tierListEntries, Tier.Skull), value: createTierListSummaryEmbedValueString(tierListEntries, Tier.Skull) },
         );
 
-    return sbigSummaryEmbed;
+    return tierListSummaryEmbed;
 }
 
-export function createSbigPlayerSummaryEmbed(submitterScores: SubmitterScores[]): EmbedBuilder {
-    const sbigSummaryEmbed = new EmbedBuilder()
+export function createPlayerSummaryEmbed(submitterScores: SubmitterStats[]): EmbedBuilder {
+    const summaryEmbed = new EmbedBuilder()
         .setColor(9662683)
-        .setTitle('SBIG Player Rankings');
+        .setTitle('Player Stats');
 
-	return generatePlayerRankings(submitterScores, sbigSummaryEmbed);
+	return generatePlayerRankings(submitterScores, summaryEmbed);
 }
 
-function createSbigSummaryEmbedValueString(sbigMovieData: MovieData[], rank: string): string {
-	const moviesOfThisRank = sbigMovieData.filter(movie => movie.sbigRank === rank);
-	if (moviesOfThisRank.length > 0) {
-		return `${moviesOfThisRank.map((movieData) => `${movieData.title} - <@${movieData.sbigSubmitter}>`).join('\n')}`;
+function createTierListSummaryEmbedValueString<T>(tierListEntries: TierListEntry<T>[], tier: string): string {
+	const entriesOfThisRank = tierListEntries.filter(entry => entry.tier === tier);
+	if (entriesOfThisRank.length > 0) {
+		return `${entriesOfThisRank.map((entryData) => `${hyperlink((entryData.externalData as OmdbData).title, createImdbLink(entryData.externalDataId as string))} - <@${entryData.submitter}>`).join('\n')}`;
 	}
 	else {
-		return 'No Movies';
+		return 'No Entries';
 	}
 }
 
-function createSbigSummaryEmbedNameString(sbigMovieData: MovieData[], rank: string): string {
-	const moviesOfThisRank = sbigMovieData.filter(movie => movie.sbigRank === rank);
-	if (moviesOfThisRank) {
-		return `${rank} - ${moviesOfThisRank.length}`;
+function createTierListSummaryEmbedNameString<T>(tierListEntries: TierListEntry<T>[], tier: string): string {
+	const entriesOfThisRank = tierListEntries.filter(entry => entry.tier === tier);
+	if (entriesOfThisRank) {
+		return `${tier} - ${entriesOfThisRank.length}`;
 	}
 	else {
-		return rank;
+		return tier;
 	}
 }
 
-function generatePlayerRankings(submitterScores: SubmitterScores[], sbigSummaryEmbed: EmbedBuilder): EmbedBuilder {
-	submitterScores.forEach((submitterScore) => {
-		sbigSummaryEmbed.addFields({ name:` Score: ${submitterScore.totalScore}`, value:`<@${submitterScore.sbigSubmitter}>\nTotal Submissions: ${submitterScore.totalSubmissions}\nAverage Rank: ${submitterScore.averageRank} (${getKeyByWeight(Math.round(Number(submitterScore.averageRank)))})` });
+function generatePlayerRankings(submitterStats: SubmitterStats[], summaryEmbed: EmbedBuilder): EmbedBuilder {
+	submitterStats.forEach((submitterStat) => {
+		summaryEmbed.addFields({
+			name:` Average: ${submitterStat.averageSubmissionScore} (${getTierByWeight(Math.round(Number(submitterStat.averageSubmissionScore)))})`,
+			value:`<@${submitterStat.submitter}>\nTotal Submissions: ${submitterStat.totalSubmissions}\nScore: ${submitterStat.totalScore}` });
 	});
-    return sbigSummaryEmbed;
+    return summaryEmbed;
 }
 
 export function createPaginationButtonActionRow(): ActionRowBuilder<ButtonBuilder> {
@@ -313,36 +319,36 @@ export function createPaginationButtonActionRow(): ActionRowBuilder<ButtonBuilde
 
 export function createSelectMenus() {
 	const rankFilter = new StringSelectMenuBuilder()
-			.setCustomId('Rank')
-			.setPlaceholder('Filter by Rank')
+			.setCustomId('Tier')
+			.setPlaceholder('Filter by Tier')
 			.addOptions(
 				new StringSelectMenuOptionBuilder()
-					.setLabel('👑')
-					.setValue('👑'),
+					.setLabel(Tier.S)
+					.setValue(Tier.S),
 				new StringSelectMenuOptionBuilder()
-					.setLabel('A')
-					.setValue('A'),
+					.setLabel(Tier.A)
+					.setValue(Tier.A),
 				new StringSelectMenuOptionBuilder()
-					.setLabel('B')
-					.setValue('B'),
+					.setLabel(Tier.B)
+					.setValue(Tier.B),
 				new StringSelectMenuOptionBuilder()
-					.setLabel('C')
-					.setValue('C'),
+					.setLabel(Tier.C)
+					.setValue(Tier.C),
 				new StringSelectMenuOptionBuilder()
-					.setLabel('D')
-					.setValue('D'),
+					.setLabel(Tier.D)
+					.setValue(Tier.D),
 				new StringSelectMenuOptionBuilder()
-					.setLabel('F')
-					.setValue('F'),
+					.setLabel(Tier.F)
+					.setValue(Tier.F),
 				new StringSelectMenuOptionBuilder()
-					.setLabel('\uD83D\uDC80')
-					.setValue('\uD83D\uDC80'),
+					.setLabel(Tier.Skull)
+					.setValue(Tier.Skull),
 			)
 			.setMinValues(1)
 			.setMaxValues(7);
 
 	const playerFilter = new UserSelectMenuBuilder()
-					.setCustomId('sbigSubmitter')
+					.setCustomId('submitter')
 					.setPlaceholder('Filter by Submitter')
 					.setMinValues(1)
 					.setMaxValues(10);
