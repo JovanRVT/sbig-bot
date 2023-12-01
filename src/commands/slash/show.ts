@@ -40,7 +40,7 @@ export const command: SlashCommand = {
         }
         else {
           tierListEntry = dbResponse;
-          const submitterUser = interaction.client.users.cache.get(tierListEntry.submitter);
+          const submitterUser = await interaction.client.users.fetch(tierListEntry.submitter);
           if (!submitterUser) {
             throw new Error(`User with ID ${tierListEntry.submitter} not found.`);
           }
