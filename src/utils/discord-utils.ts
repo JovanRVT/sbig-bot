@@ -205,8 +205,7 @@ export function createVotingResultsEmbed(voteResults: Map<string, Array<string>>
 			{ name: `${createVoteResultsEmbedNameString(voteResults, Tier.Skull)}`, value: `${createVoteResultsEmbedValueString(voteResults, Tier.Skull)}`, inline: true },
 			{ name: 'Total Votes', value: `${convertVotingResultsToUserSelections(voteResults).size}` }
 		)
-		.setTimestamp()
-		.setFooter({ text: 'So Bad It\'s Good' });
+		.setTimestamp();
 
 	return currentResultsEmbed;
 }
