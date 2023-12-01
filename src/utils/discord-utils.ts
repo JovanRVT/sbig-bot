@@ -204,8 +204,7 @@ export function createVotingResultsEmbed(voteResults: Map<string, Array<string>>
 			{ name: `${createVoteResultsEmbedNameString(voteResults, Tier.F)}`, value: `${createVoteResultsEmbedValueString(voteResults, Tier.F)}`, inline: true },
 			{ name: `${createVoteResultsEmbedNameString(voteResults, Tier.Skull)}`, value: `${createVoteResultsEmbedValueString(voteResults, Tier.Skull)}`, inline: true },
 			{ name: 'Total Votes', value: `${convertVotingResultsToUserSelections(voteResults).size}` }
-		)
-		.setTimestamp();
+		);
 
 	return currentResultsEmbed;
 }
