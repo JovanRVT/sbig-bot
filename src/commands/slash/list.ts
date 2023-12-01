@@ -52,7 +52,7 @@ export const command: SlashCommand = {
         await handleInteractiveTierList(interaction, tierListEntries);
       }
       else {
-        let title = category + ' Rankings';
+        let title = category + ' Tier List';
         if (submitter !== null) {
           tierListEntries = tierListEntries.filter(tierListEntry => tierListEntry.submitter === submitter?.id);
           title += ` for ${submitter.displayName}`;
