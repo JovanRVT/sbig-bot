@@ -119,3 +119,5 @@ turnOrder.json
 sbigMovies.json
 cache.json
 .env.example
+rpiDetails.txt
+anime.json

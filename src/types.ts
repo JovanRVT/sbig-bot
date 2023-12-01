@@ -55,32 +55,21 @@ export type ContextMenuCommandFile = {
   command: ContextMenuCommand;
 };
 
-export type MovieData = {
-  sbigRank: string;
-  sbigNotes: string;
-  sbigWatchedDate: string;
-  sbigSubmitter: string;
-  sbigVoteResults: string,
-  title: string;
-  plot: string;
-  image: string;
-  imdbRating: number;
-  genre: string;
-  release: string;
-  runtime: string;
-  rating: string;
-  year: number;
-  otherRatings: {Source: string, Value: string}[];
-  director: string;
-  actors: string;
-  writers: string;
-  boxOffice: string;
-  imdbId: string;
+// Tier List Types
+// eslint-disable-next-line no-shadow
+export enum Tier {
+  S = '👑',
+  A = 'A',
+  B = 'B',
+  C = 'C',
+  D = 'D',
+  F = 'F',
+  Skull = '\uD83D\uDC80',
 }
 
-export type SubmitterScores = {
-  sbigSubmitter: string;
+export type SubmitterStats = {
+  submitter: string;
   totalSubmissions: number;
-  averageRank: string;
+  averageSubmissionScore: string;
   totalScore: number;
 }

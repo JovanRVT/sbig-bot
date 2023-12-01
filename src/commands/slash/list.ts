@@ -1,27 +1,45 @@
 import { ChatInputCommandInteraction, ComponentType, SlashCommandBuilder, User, hyperlink } from 'discord.js';
-import { MovieData, SlashCommand } from '../../types';
-import { createPaginationButtonActionRow as createPaginationButtonActionRow, createMovieSummaryEmbed, createSbigPlayerSummaryEmbed, createSbigSummaryEmbed, createSelectMenus } from '../../utils/discord-utils';
-import { readMovies } from '../../services/crud-service';
-import { calculatePlayerRankings, getWeightByKey } from '../../services/vote-service';
+import { SlashCommand } from '../../types';
+import { createPaginationButtonActionRow as createPaginationButtonActionRow, createTierListEntrySummaryEmbed, createPlayerSummaryEmbed, createTierListSummaryEmbed, createSelectMenus } from '../../utils/discord-utils';
+import { calculatePlayerRankings, getWeightByTier } from '../../services/vote-service';
 import { logToDevChannel } from '../../utils/utils';
+import { TierListEntry } from '../../lib/tier-list-entry';
+import { Op } from 'sequelize';
 
 export const command: SlashCommand = {
   data: new SlashCommandBuilder()
     .setName('list')
-    .setDescription('List the SBIG Rankings')
+    .setDescription('List the Tiers for a category (SBIGMovies by default)')
+    .addStringOption(option =>
+      option.setName('category')
+        .setDescription('Rank Category for the vote to be saved')
+        .setRequired(false)
+      )
     .addBooleanOption(option =>
       option
         .setName('interactive')
-        .setDescription('Enable interactive (movie details with pagination and filters) viewing of the SBIG Rankings')
+        .setDescription('Enable interactive (tier list entry summary with pagination and filters) viewing of the Tier List')
         .setRequired(false))
     .addUserOption(option =>
       option
         .setName('user')
-        .setDescription('User to filter movies by. Does not apply to interactive.')
+        .setDescription('User to filter by. Does not apply to interactive.')
         .setRequired(false)),
   async execute(interaction) {
     try {
-      let sbigMovies: MovieData[] = readMovies('sbigMovies.json');
+      // Pull input category
+      let category = 'SBIGMovies';
+      const categoryOption = interaction.options.get('category')?.value;
+      if (categoryOption) {
+        category = categoryOption as string;
+      }
+
+      let tierListEntries = await TierListEntry.findAll({
+        where: {
+          guildId: { [Op.eq]: interaction.guildId },
+          category: { [Op.eq]: category },
+        },
+      });
 
       // Pull input submitter
       const submitterOption = interaction.options.get('user');
@@ -31,18 +49,18 @@ export const command: SlashCommand = {
       }
 
       if (interaction.options.get('interactive')) {
-        await handleInteractiveMovieList(interaction, sbigMovies);
+        await handleInteractiveTierList(interaction, tierListEntries);
       }
       else {
-        let title = 'SBIG Movie Rankings';
+        let title = category + ' Rankings';
         if (submitter !== null) {
-          sbigMovies = sbigMovies.filter(movie => movie.sbigSubmitter === submitter?.id);
+          tierListEntries = tierListEntries.filter(tierListEntry => tierListEntry.submitter === submitter?.id);
           title += ` for ${submitter.displayName}`;
         }
 
-        const sbigSummaryEmbed = createSbigSummaryEmbed(sbigMovies, title);
-        const sbigPlayerRankingEmbed = createSbigPlayerSummaryEmbed(calculatePlayerRankings(sbigMovies));
-        const embedsArray = [sbigSummaryEmbed, sbigPlayerRankingEmbed];
+        const tierListSummaryEmbed = createTierListSummaryEmbed(tierListEntries, title);
+        const playerRankingEmbed = createPlayerSummaryEmbed(calculatePlayerRankings(tierListEntries));
+        const embedsArray = [tierListSummaryEmbed, playerRankingEmbed];
 
         const url = 'https://docs.google.com/spreadsheets/d/1xC3lzmjn7pkE4JXJS7PnbPXJ8c0Kfn8r5aqQo5SOWNo/edit?usp=sharing';
         const link = hyperlink('Click here for OG Google Sheet List', url);
@@ -55,21 +73,21 @@ export const command: SlashCommand = {
   },
 };
 
-async function handleInteractiveMovieList(interaction: ChatInputCommandInteraction, sbigMovies: MovieData[]) {
+async function handleInteractiveTierList<T>(interaction: ChatInputCommandInteraction, tierListEntries: TierListEntry<T>[]) {
   try {
-    sbigMovies.sort((a, b) => getWeightByKey(b.sbigRank) - getWeightByKey(a.sbigRank));
+    tierListEntries.sort((a, b) => getWeightByTier(b.tier) - getWeightByTier(a.tier));
     let numberOfResults = 3;
-    let chunkedSbigMovies = chunkArray(sbigMovies.slice(), numberOfResults);
+    let chunkedTierLists = chunkArray(tierListEntries.slice(), numberOfResults);
     let currentPageNo = 0;
-    let totalMovies = sbigMovies.length;
-    let embedsArray = await updateCurrentPageAndEmbeds(currentPageNo, chunkedSbigMovies, interaction);
+    let totalEntries = tierListEntries.length;
+    let embedsArray = await updateCurrentPageAndEmbeds(currentPageNo, chunkedTierLists, interaction);
     let submitterSelection: string[] = [];
-    let rankSelection: string[] = [];
+    let tierSelection: string[] = [];
 
     const paginationRow = createPaginationButtonActionRow();
     const selectMenuRow = createSelectMenus();
 
-    const interactionResponse = await interaction.reply({ content: `Total Movies: ${sbigMovies.length}\n${currentPageNo + 1}/${chunkedSbigMovies.length}`, embeds: embedsArray.map(embed => embed.toJSON()), components: [paginationRow, ...selectMenuRow.map(row => row.toJSON())] });
+    const interactionResponse = await interaction.reply({ content: `Total Entries: ${tierListEntries.length}\n${currentPageNo + 1}/${chunkedTierLists.length}`, embeds: embedsArray.map(embed => embed.toJSON()), components: [paginationRow, ...selectMenuRow.map(row => row.toJSON())] });
 
     const rankFilterAndNumberOfResultsCollector = interactionResponse.createMessageComponentCollector({ componentType: ComponentType.StringSelect, time: 900000 });
     const submitterFilterCollector = interactionResponse.createMessageComponentCollector({ componentType: ComponentType.UserSelect, time: 900000 });
@@ -79,7 +97,7 @@ async function handleInteractiveMovieList(interaction: ChatInputCommandInteracti
       try {
         const selection = i.customId;
         if (selection === 'Next') {
-          if (currentPageNo >= chunkedSbigMovies.length - 1) {
+          if (currentPageNo >= chunkedTierLists.length - 1) {
             currentPageNo = 0;
           }
           else {
@@ -87,13 +105,13 @@ async function handleInteractiveMovieList(interaction: ChatInputCommandInteracti
           }
         } else if (selection === 'Prev') {
           if (currentPageNo <= 0) {
-            currentPageNo = chunkedSbigMovies.length - 1;
+            currentPageNo = chunkedTierLists.length - 1;
           }
           else {
             currentPageNo--;
           }
         } else if (selection === 'Last') {
-          currentPageNo = chunkedSbigMovies.length - 1;
+          currentPageNo = chunkedTierLists.length - 1;
         } else if (selection === 'First') {
           currentPageNo = 0;
         } else if (selection === 'Stop') {
@@ -102,8 +120,8 @@ async function handleInteractiveMovieList(interaction: ChatInputCommandInteracti
           return;
         }
 
-        embedsArray = await updateCurrentPageAndEmbeds(currentPageNo, chunkedSbigMovies, interaction);
-        i.update({ content: `Total Movies: ${totalMovies}\n ${currentPageNo + 1}/${chunkedSbigMovies.length}`, embeds: embedsArray.map(embed => embed.toJSON()) });
+        embedsArray = await updateCurrentPageAndEmbeds(currentPageNo, chunkedTierLists, interaction);
+        i.update({ content: `Total Entries: ${totalEntries}\n ${currentPageNo + 1}/${chunkedTierLists.length}`, embeds: embedsArray.map(embed => embed.toJSON()) });
       } catch (error) {
         logToDevChannel(interaction.client, String(error));
         await i.reply({ content: 'An error occurred while processing your request. Please try again later.', ephemeral: true });
@@ -118,19 +136,19 @@ async function handleInteractiveMovieList(interaction: ChatInputCommandInteracti
       try {
         if (i.customId === 'numberOfResults') {
           numberOfResults = Number(i.values[0]);
-          const filteredSbigMovies = applyFilters(sbigMovies, rankSelection, submitterSelection);
-          chunkedSbigMovies = chunkArray(filteredSbigMovies, numberOfResults);
+          const filteredTierListEntries = applyFilters(tierListEntries, tierSelection, submitterSelection);
+          chunkedTierLists = chunkArray(filteredTierListEntries, numberOfResults);
         }
         else {
           // Handle multi-select Rank filter.
-          rankSelection = i.values;
-          const filteredSbigMovies = applyFilters(sbigMovies, rankSelection, submitterSelection);
-          totalMovies = filteredSbigMovies.length;
-          chunkedSbigMovies = chunkArray(filteredSbigMovies, numberOfResults);
+          tierSelection = i.values;
+          const filteredTierListEntries = applyFilters(tierListEntries, tierSelection, submitterSelection);
+          totalEntries = filteredTierListEntries.length;
+          chunkedTierLists = chunkArray(filteredTierListEntries, numberOfResults);
         }
         currentPageNo = 0;
-        embedsArray = await updateCurrentPageAndEmbeds(currentPageNo, chunkedSbigMovies, interaction);
-        i.update({ content: `Total Movies: ${totalMovies}\n ${currentPageNo + 1}/${chunkedSbigMovies.length}`, embeds: embedsArray.map(embed => embed.toJSON()) });
+        embedsArray = await updateCurrentPageAndEmbeds(currentPageNo, chunkedTierLists, interaction);
+        i.update({ content: `Total Entries: ${totalEntries}\n ${currentPageNo + 1}/${chunkedTierLists.length}`, embeds: embedsArray.map(embed => embed.toJSON()) });
       } catch (error) {
         logToDevChannel(interaction.client, `Error in rankFilterAndNumberOfResultsCollector ${String(error)}`);
         await i.reply({ content: 'An error occurred while processing your request. Please try again later.', ephemeral: true });
@@ -141,13 +159,13 @@ async function handleInteractiveMovieList(interaction: ChatInputCommandInteracti
       try {
         submitterSelection = i.values;
 
-        const filteredSbigMovies = applyFilters(sbigMovies, rankSelection, submitterSelection);
-        totalMovies = filteredSbigMovies.length;
-        chunkedSbigMovies = chunkArray(filteredSbigMovies, numberOfResults);
+        const filteredTierListEntries = applyFilters(tierListEntries, tierSelection, submitterSelection);
+        totalEntries = filteredTierListEntries.length;
+        chunkedTierLists = chunkArray(filteredTierListEntries, numberOfResults);
         currentPageNo = 0;
-        embedsArray = await updateCurrentPageAndEmbeds(currentPageNo, chunkedSbigMovies, interaction);
+        embedsArray = await updateCurrentPageAndEmbeds(currentPageNo, chunkedTierLists, interaction);
 
-        i.update({ content: `Total Movies: ${totalMovies}\n ${currentPageNo + 1}/${chunkedSbigMovies.length}`, embeds: embedsArray.map(embed => embed.toJSON()) });
+        i.update({ content: `Total Entries: ${totalEntries}\n ${currentPageNo + 1}/${chunkedTierLists.length}`, embeds: embedsArray.map(embed => embed.toJSON()) });
       } catch (error) {
         logToDevChannel(interaction.client, String(error));
         await i.reply({ content: 'An error occurred while processing your request. Please try again later.', ephemeral: true });
@@ -166,28 +184,28 @@ function chunkArray<T>(array: T[], chunkSize: number): T[][] {
   return results;
 }
 
-async function updateCurrentPageAndEmbeds(currentPageNo: number, chunkedSbigMovies: MovieData[][], interaction: ChatInputCommandInteraction) {
+async function updateCurrentPageAndEmbeds<T>(currentPageNo: number, chunkedTierListEntries: TierListEntry<T>[][], interaction: ChatInputCommandInteraction) {
   const embedsArray = [];
-  if (chunkedSbigMovies.length > 0) {
-    const currentPage = chunkedSbigMovies[currentPageNo];
-    for (const movie of currentPage) {
-      embedsArray.push(createMovieSummaryEmbed(movie, await interaction.client.users.fetch(movie.sbigSubmitter)));
+  if (chunkedTierListEntries.length > 0) {
+    const currentPage = chunkedTierListEntries[currentPageNo];
+    for (const tierListEntry of currentPage) {
+      embedsArray.push(createTierListEntrySummaryEmbed(tierListEntry, await interaction.client.users.fetch(tierListEntry.submitter)));
     }
   }
 
   return embedsArray;
 }
 
-function applyFilters(allMovies: MovieData[], rankSelection: string[], submitterSelection: string[]): MovieData[] {
-  let filteredSbigMovies = allMovies.slice();
+function applyFilters<T>(allTierListEntries: TierListEntry<T>[], tierSelection: string[], submitterSelection: string[]): TierListEntry<T>[] {
+  let filteredTierListEntries = allTierListEntries.slice();
 
-  if (rankSelection.length > 0) {
-    filteredSbigMovies = filteredSbigMovies.filter(movie => rankSelection.includes(movie.sbigRank));
+  if (tierSelection.length > 0) {
+    filteredTierListEntries = filteredTierListEntries.filter(tierListEntry => tierSelection.includes(tierListEntry.tier));
   }
 
   if (submitterSelection.length > 0) {
-    filteredSbigMovies = filteredSbigMovies.filter(movie => submitterSelection.includes(movie.sbigSubmitter));
+    filteredTierListEntries = filteredTierListEntries.filter(tierListEntry => submitterSelection.includes(tierListEntry.submitter));
   }
 
-  return filteredSbigMovies;
+  return filteredTierListEntries;
 }
