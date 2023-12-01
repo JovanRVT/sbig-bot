@@ -1,6 +1,6 @@
 import { ButtonInteraction, ModalBuilder, TextInputBuilder, TextInputStyle, User, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, UserSelectMenuBuilder, hyperlink } from 'discord.js';
 import { SubmitterStats, Tier } from '../types';
-import { calculateAverageVote, calculateResults, getTierByWeight } from '../services/vote-service';
+import { calculateAverageVote, calculateResults, convertVotingResultsToUserSelections, getTierByWeight } from '../services/vote-service';
 import { TierListEntry } from '../lib/tier-list-entry';
 import { OmdbData } from '../lib/omdb-data';
 import { logToDevChannel } from './utils';
@@ -203,7 +203,7 @@ export function createVotingResultsEmbed(voteResults: Map<string, Array<string>>
 			{ name: `${createVoteResultsEmbedNameString(voteResults, Tier.D)}`, value: `${createVoteResultsEmbedValueString(voteResults, Tier.D)}`, inline: true },
 			{ name: `${createVoteResultsEmbedNameString(voteResults, Tier.F)}`, value: `${createVoteResultsEmbedValueString(voteResults, Tier.F)}`, inline: true },
 			{ name: `${createVoteResultsEmbedNameString(voteResults, Tier.Skull)}`, value: `${createVoteResultsEmbedValueString(voteResults, Tier.Skull)}`, inline: true },
-			{ name: 'Total Votes', value: `${voteResults.size}` }
+			{ name: 'Total Votes', value: `${convertVotingResultsToUserSelections(voteResults).size}` }
 		)
 		.setTimestamp()
 		.setFooter({ text: 'So Bad It\'s Good' });
