@@ -47,7 +47,8 @@ Originally based on https://github.com/vercel/nextjs-discord-bot/tree/main
     - [Postgres on Rasperry Pi](https://pimylifeup.com/raspberry-pi-postgresql/)
         - [Remote Access](https://tecadmin.net/postgresql-allow-remote-connections/)
     - [Grafana](https://grafana.com/tutorials/install-grafana-on-raspberry-pi/#install-grafana)
-    - [Prometheus](https://www.linuxconsultant.org/how-to-install-prometheus-on-raspberry-pi/)
-        - NOTE: This is an older version, and not compatible with Rasperry Pi 3 Model B. Instead, follow the steps using "prometheus-2.48.0.linux-armv7.tar.gz"
+    - [Prometheus](https://prometheus.io/docs/prometheus/latest/getting_started/)
+        - [Rasperry Pi Installation](https://www.linuxconsultant.org/how-to-install-prometheus-on-raspberry-pi/)
+            - NOTE: This is an older version, and not compatible with Rasperry Pi 3 Model B. Instead, follow the steps using "prometheus-2.48.0.linux-armv7.tar.gz"
 - [Sequalize](https://sequelize.org/docs/v6/category/core-concepts/)
 
