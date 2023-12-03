@@ -49,6 +49,6 @@ Originally based on https://github.com/vercel/nextjs-discord-bot/tree/main
         - [Remote Access](https://tecadmin.net/postgresql-allow-remote-connections/)
     - [Grafana](https://grafana.com/tutorials/install-grafana-on-raspberry-pi/#install-grafana)
     - [Prometheus](https://prometheus.io/docs/prometheus/latest/getting_started/)
-        - [Rasperry Pi Installation](https://www.linuxconsultant.org/how-to-install-prometheus-on-raspberry-pi/)
-            - NOTE: This is an older version, and not compatible with Rasperry Pi 3 Model B. Instead, follow the steps using "prometheus-2.48.0.linux-armv7.tar.gz"
+        - [Rasperry Pi Installation](https://pimylifeup.com/raspberry-pi-prometheus/)
+            - NOTE: There is a newer prometheus version.
 
