@@ -51,14 +51,13 @@ export async function createSaveModal<T>(interaction: ButtonInteraction, initial
 
 		await interaction.showModal(modal);
 		const modalSubmitInteraction = await interaction.awaitModalSubmit({ time: 900000 });
-
+		modalSubmitInteraction.reply({ content: `Result Saved by ${modalSubmitInteraction.user}` });
 		initialDetails.tier = modalSubmitInteraction.fields.getTextInputValue('tierInput') as Tier;
 		initialDetails.notes = modalSubmitInteraction.fields.getTextInputValue('notesInput');
 		initialDetails.category = modalSubmitInteraction.fields.getTextInputValue('categoryInput');
 		return initialDetails;
 	} catch (error) {
 		console.error(error);
-		logToDevChannel(interaction.client, String(error));
 		return initialDetails;
 	}
 }

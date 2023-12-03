@@ -167,14 +167,17 @@ async function saveActions<T>(interaction: ChatInputCommandInteraction, tierList
       if (i.customId === 'Save') {
         createSaveModal(i, tierListEntry).then((savedTierListData) => {
           savedTierListData.save();
+          collector.stop();
         });
-        i.update({ content: 'Result Saved!', components: [] });
-        collector.stop();
       }
       else if (i.customId === 'Cancel') {
         i.update({ content: 'Result Not Saved!', components: [] });
         collector.stop();
       }
+    });
+
+    collector.on('end', () => {
+      interaction.editReply({ components:[] });
     });
   }
   catch (error) {
