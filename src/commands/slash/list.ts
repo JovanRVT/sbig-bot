@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, ComponentType, SlashCommandBuilder, User, hyperlink } from 'discord.js';
+import { ChatInputCommandInteraction, ComponentType, SlashCommandBuilder, User } from 'discord.js';
 import { SlashCommand } from '../../types';
 import { createPaginationButtonActionRow as createPaginationButtonActionRow, createTierListEntrySummaryEmbed, createPlayerSummaryEmbed, createTierListSummaryEmbed, createSelectMenus } from '../../utils/discord-utils';
 import { calculatePlayerRankings, getWeightByTier } from '../../services/vote-service';
@@ -61,10 +61,7 @@ export const command: SlashCommand = {
         const tierListSummaryEmbed = createTierListSummaryEmbed(tierListEntries, title);
         const playerRankingEmbed = createPlayerSummaryEmbed(calculatePlayerRankings(tierListEntries));
         const embedsArray = [tierListSummaryEmbed, playerRankingEmbed];
-
-        const url = 'https://docs.google.com/spreadsheets/d/1xC3lzmjn7pkE4JXJS7PnbPXJ8c0Kfn8r5aqQo5SOWNo/edit?usp=sharing';
-        const link = hyperlink('Click here for OG Google Sheet List', url);
-        await interaction.reply({ content: link, embeds: embedsArray.map(embed => embed.toJSON()) });
+        await interaction.reply({ embeds: embedsArray.map(embed => embed.toJSON()) });
       }
     } catch (error) {
       logToDevChannel(interaction.client, String(error));

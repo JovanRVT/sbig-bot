@@ -3,7 +3,6 @@ import { SubmitterStats, Tier } from '../types';
 import { calculateAverageVote, calculateResults, convertVotingResultsToUserSelections, getTierByWeight } from '../services/vote-service';
 import { TierListEntry } from '../lib/tier-list-entry';
 import { OmdbData } from '../lib/omdb-data';
-import { logToDevChannel } from './utils';
 
 /* This file is meant for Discord components and formatting */
 
