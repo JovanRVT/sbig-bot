@@ -1,6 +1,6 @@
-# So Bad It's Good (SBIG) Discord Bot
+# Tier List Discord Bot
 
-Movie Tier List bot
+Tier List bot
 
 Originally based on https://github.com/vercel/nextjs-discord-bot/tree/main
 
@@ -42,9 +42,13 @@ Originally based on https://github.com/vercel/nextjs-discord-bot/tree/main
     - [Modals](https://discordjs.guide/interactions/modals.html)
 - [OMDB API](https://www.omdbapi.com/)
 - [Visual Studio Code NodeJS Tutorial](https://code.visualstudio.com/docs/nodejs/nodejs-tutorial)
+- [Sequalize](https://sequelize.org/docs/v6/category/core-concepts/)
 - [Rasperry Pi](https://www.raspberrypi.com/products/raspberry-pi-3-model-b/)
     - [Getting Started - OS Install](https://www.raspberrypi.com/documentation/computers/getting-started.html#install-an-operating-system)
     - [Postgres on Rasperry Pi](https://pimylifeup.com/raspberry-pi-postgresql/)
         - [Remote Access](https://tecadmin.net/postgresql-allow-remote-connections/)
-- [Sequalize](https://sequelize.org/docs/v6/category/core-concepts/)
+    - [Grafana](https://grafana.com/tutorials/install-grafana-on-raspberry-pi/#install-grafana)
+    - [Prometheus](https://prometheus.io/docs/prometheus/latest/getting_started/)
+        - [Rasperry Pi Installation](https://pimylifeup.com/raspberry-pi-prometheus/)
+            - NOTE: There is a newer prometheus version.
 
