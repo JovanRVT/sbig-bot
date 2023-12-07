@@ -6,6 +6,7 @@ import {
   MessageContextMenuCommandInteraction,
   MessageReaction,
   SlashCommandBuilder,
+  SlashCommandSubcommandsOnlyBuilder,
   User,
 } from 'discord.js';
 
@@ -36,7 +37,7 @@ export type FeatureFile = {
 };
 
 export type SlashCommand = {
-  data: Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>;
+  data: Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'> | SlashCommandSubcommandsOnlyBuilder;
   execute: (interaction: ChatInputCommandInteraction) => void | Promise<void>;
 };
 
@@ -73,3 +74,8 @@ export type SubmitterStats = {
   averageSubmissionScore: string;
   totalScore: number;
 }
+
+export type TurnOrderItem = {
+  id: string;
+  isTurn: boolean;
+};

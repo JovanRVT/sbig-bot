@@ -47,8 +47,8 @@ Originally based on https://github.com/vercel/nextjs-discord-bot/tree/main
     - [Getting Started - OS Install](https://www.raspberrypi.com/documentation/computers/getting-started.html#install-an-operating-system)
     - [Postgres on Rasperry Pi](https://pimylifeup.com/raspberry-pi-postgresql/)
         - [Remote Access](https://tecadmin.net/postgresql-allow-remote-connections/)
-    - [Grafana](https://grafana.com/tutorials/install-grafana-on-raspberry-pi/#install-grafana)
     - [Prometheus](https://prometheus.io/docs/prometheus/latest/getting_started/)
         - [Rasperry Pi Installation](https://pimylifeup.com/raspberry-pi-prometheus/)
             - NOTE: There is a newer prometheus version.
-
+    - [Grafana](https://grafana.com/tutorials/install-grafana-on-raspberry-pi/#install-grafana)
+        - [PromQL Queries](https://github.com/code-with-jov/sbig-bot/blob/main/Docs/PromQL.md)
